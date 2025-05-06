@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+
+
+    <!-- Vertical Bar -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M30,0 H70 V100 H30 Z"/>
+
+    <!-- Horizontal Bar -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M0,30 H100 V70 H0 Z"/>
+
+    <!-- Vertical Bar -->
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M36.5,6.5 H63.5 V93.5 H36.5 Z"/>
+
+    <!-- Horizontal Bar -->
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M6.5,36.5 H93.5 V63.5 H6.5 Z"/>
+
+
+</vector>
