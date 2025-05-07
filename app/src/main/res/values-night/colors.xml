@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="outline">#FFFFFFFF</color>
+    <color name="background">#FF1c1c20</color>
+    <color name="shapeInside">#FF000000</color>
+</resources>
