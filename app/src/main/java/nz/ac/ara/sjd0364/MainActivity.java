@@ -1,11 +1,26 @@
 package nz.ac.ara.sjd0364;
 
+import static nz.ac.ara.sjd0364.model.enums.Color.BLANK;
+import static nz.ac.ara.sjd0364.model.enums.Color.BLUE;
+import static nz.ac.ara.sjd0364.model.enums.Color.GREEN;
+import static nz.ac.ara.sjd0364.model.enums.Color.PURPLE;
+import static nz.ac.ara.sjd0364.model.enums.Color.RED;
+import static nz.ac.ara.sjd0364.model.enums.Color.YELLOW;
+
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.GridLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -20,6 +35,7 @@ import java.io.InputStreamReader;
 
 import nz.ac.ara.sjd0364.model.BlankSquare;
 import nz.ac.ara.sjd0364.model.Game;
+import nz.ac.ara.sjd0364.model.Level;
 import nz.ac.ara.sjd0364.model.PlayableSquare;
 import nz.ac.ara.sjd0364.model.enums.Direction;
 import nz.ac.ara.sjd0364.model.enums.Shape;
@@ -29,7 +45,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
-    Game game;
+    private Game game;
+    private int currentLevel = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,44 +63,71 @@ public class MainActivity extends AppCompatActivity {
 
         loadMazesFromFiles();
 
-//        FrameLayout frame = findViewById(R.id.boardFrame);
-//
-//        LinearLayout verticalLayout = new LinearLayout(this);
-//        verticalLayout.setOrientation(LinearLayout.VERTICAL);
-////        verticalLayout.
-//        frame.addView(verticalLayout);
+        game.setLevel(currentLevel);
+
+//        Set up the level change buttons
+        Button nextButton = findViewById(R.id.nextLevel);
+        Button previousButton = findViewById(R.id.backLevel);
+        nextButton.setOnClickListener(v -> changeLevelOnClick(1,nextButton, previousButton));
+        previousButton.setOnClickListener(v -> changeLevelOnClick(-1, nextButton, previousButton));
+        previousButton.setEnabled(false);
+
+        renderCurrentLevel();
+
+    }
+
+    public void changeLevelOnClick(int change, Button nextButton, Button previousButton) {
+        currentLevel += change;
+        game.setLevel(currentLevel);
+
+        previousButton.setEnabled(currentLevel != 0);
+        nextButton.setEnabled(currentLevel != game.getLevelCount() - 1);
+
+        renderCurrentLevel();
+    }
+
+
+    private void renderCurrentLevel() {
         GridLayout gridLayout = findViewById(R.id.boardFrame);
 
+//        clear the grid layout
+        gridLayout.removeAllViews();
 
-//        for (int i = 0; i < 4; i++) {
-//            for (int j = 0; j < 5; j++) {
-////                ImageButton button = new ImageButton(this);
-////                button.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.flower));
-////                horizontalLayout.addView(button);
-//                ImageView image = new ImageView(this);
-//                GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-//                params.width = 0;
-//                params.height = 0;
-//                params.rowSpec = GridLayout.spec(i, 1f);
-//                params.columnSpec = GridLayout.spec(j, 1f);
-//                image.setLayoutParams(params);
-//                image.setBackgroundColor(Color.parseColor("#ffffff"));
-////                image.setPadding(1,1,1,1);
-////                GradientDrawable drawable = (GradientDrawable) ContextCompat.getDrawable(this, R.drawable.flower);
-////                drawable.setColor(Color.RED); // Set new color
-//                Drawable drawable = AppCompatResources.getDrawable(this, list.get(j % list.size()));
-////                drawable.
-//                if (drawable != null) {
-//                    drawable.setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
-//                }
-//                else {
-//                    throw new NullPointerException("Drawable is null");
-//                }
-//                image.setImageDrawable(drawable);
-//                gridLayout.addView(image);
-//            }
-//        }
-        System.out.println(gridLayout.getHeight());
+        Log.d(TAG, "rendering: " + currentLevel + " " + game.getLevelHeight() + " " + game.getLevelWidth());
+
+
+        for (int i = 0; i < game.getLevelHeight(); i++) {
+            for (int j = 0; j < game.getLevelWidth(); j++) {;
+
+                Shape shape = game.getShapeAt(i, j);
+                nz.ac.ara.sjd0364.model.enums.Color color = game.getColorAt(i, j);
+
+                ImageView image = new ImageView(this);
+                GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+                params.width = 0;
+                params.height = 0;
+                params.rowSpec = GridLayout.spec(i, 1f);
+                params.columnSpec = GridLayout.spec(j, 1f);
+                image.setLayoutParams(params);
+                image.setBackgroundColor(Color.parseColor("#ffffff"));
+                Log.d(TAG, "onCreate: "+ shape + " " + color);
+                if (shape != Shape.BLANK && color != BLANK) {
+
+                    Drawable drawable = AppCompatResources.getDrawable(this, getDrawableIDFromShape(shape));
+                    if (drawable != null) {
+                        drawable.setColorFilter(Color.parseColor(getHashCodeFromColor(color)), PorterDuff.Mode.MULTIPLY);
+                    } else {
+                        throw new NullPointerException("Drawable is null");
+                    }
+                    image.setImageDrawable(drawable);
+                }
+                gridLayout.addView(image);
+            }
+        }
+
+        TextView levelTitle = findViewById(R.id.levelTitle);
+        String title = "Level " + (currentLevel + 1) + " of " + game.getLevelCount();
+        levelTitle.setText(title);
     }
 
     private void loadMazesFromFiles() {
@@ -109,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
                             Shape shape = getShape(cellDate.substring(0, 1));
                             nz.ac.ara.sjd0364.model.enums.Color color = getColor(cellDate.substring(1));
                             Square square = new PlayableSquare(color, shape);
-                            if (shape == Shape.BLANK && color == nz.ac.ara.sjd0364.model.enums.Color.BLANK) {
+                            if (shape == Shape.BLANK && color == BLANK) {
                                 square = new BlankSquare();
                             }
                             game.addSquare(square, i, j);
@@ -162,12 +206,12 @@ public class MainActivity extends AppCompatActivity {
 
     private nz.ac.ara.sjd0364.model.enums.Color getColor(String color) {
         return switch (color) {
-            case "a" -> nz.ac.ara.sjd0364.model.enums.Color.BLUE;
-            case "b" -> nz.ac.ara.sjd0364.model.enums.Color.RED;
-            case "c" -> nz.ac.ara.sjd0364.model.enums.Color.YELLOW;
-            case "d" -> nz.ac.ara.sjd0364.model.enums.Color.GREEN;
-            case "e" -> nz.ac.ara.sjd0364.model.enums.Color.PURPLE;
-            case "-" -> nz.ac.ara.sjd0364.model.enums.Color.BLANK;
+            case "a" -> BLUE;
+            case "b" -> RED;
+            case "c" -> YELLOW;
+            case "d" -> GREEN;
+            case "e" -> PURPLE;
+            case "-" -> BLANK;
             default -> throw new IllegalArgumentException("Invalid color: " + color);
         };
     }
@@ -190,6 +234,18 @@ public class MainActivity extends AppCompatActivity {
             case FLOWER -> R.drawable.flower;
             case LIGHTNING -> R.drawable.lightning;
             default -> throw new IllegalStateException("Unexpected value: " + shape);
+        };
+    }
+
+    String getHashCodeFromColor(nz.ac.ara.sjd0364.model.enums.Color color) {
+        return switch (color) {
+            case BLUE -> "#00ffff";
+            case RED -> "#ff0000";
+            case YELLOW -> "#ffff00";
+            case GREEN -> "#00ff00";
+            case BLANK -> "#ffffff";
+            case PURPLE -> "#9400d3";
+            default -> throw new IllegalStateException("Unexpected value: " + color);
         };
     }
 }
