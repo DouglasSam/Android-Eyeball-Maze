@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500px" height="500px">
+
+    <ellipse style="stroke: rgb(0, 0, 0); stroke-width: 25px; fill: rgba(216, 216, 216, 0);" cx="250" cy="250" rx="218.071" ry="218.071">
+
+    </ellipse>
+
+    <path d="M 0 0 A 88 88 0 1 1 -135.806 0 A 89.241 89.241 0 0 0 0 0 Z
+" transform="translate(318,50) " style="fill: #ffffff; stroke: rgb(0, 0, 0); stroke-width: 25px; stroke-linecap: round; stroke-linejoin: round;">
+
+</path>
+
+    <path style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0); stroke-width: 25px; stroke-linecap: round;" d="M 107.918 67.12 L 75.351 26.252">
+
+    </path>
+
+    <path style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0); stroke-width: 25px; stroke-linecap: round;" d="M 107.918 67.12 L 75.351 26.252"
+        transform="translate(250,250) scale(-1,1) translate(-250,-250)"
+    >
+
+    </path>
+
+
+    <path style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0); stroke-width: 25px; stroke-linecap: round;" d="M 247.126 31.698 L 247.126 17.011">
+
+    </path>
+
+</svg>
