@@ -1,5 +1,6 @@
 package nz.ac.ara.sjd0364;
 
+import static nz.ac.ara.sjd0364.Lookup.GRID_MARGIN;
 import static nz.ac.ara.sjd0364.Lookup.getDirection;
 import static nz.ac.ara.sjd0364.Lookup.getShape;
 import static nz.ac.ara.sjd0364.model.enums.Color.BLANK;
@@ -20,25 +21,26 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 
 import nz.ac.ara.sjd0364.model.BlankSquare;
 import nz.ac.ara.sjd0364.model.Game;
 import nz.ac.ara.sjd0364.model.PlayableSquare;
 import nz.ac.ara.sjd0364.model.enums.Direction;
+import nz.ac.ara.sjd0364.model.enums.Message;
 import nz.ac.ara.sjd0364.model.enums.Shape;
 import nz.ac.ara.sjd0364.model.interfaces.Square;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
-    protected static final int GRID_MARGIN = 7;
-
     private Game game;
     private int currentLevel = 0;
 
@@ -57,6 +59,8 @@ public class MainActivity extends AppCompatActivity {
 
         loadMazesFromFiles();
 
+        loadMessageStringsFromFiles();
+
         game.setLevel(currentLevel);
 
 //        Set up the level change buttons
@@ -70,10 +74,12 @@ public class MainActivity extends AppCompatActivity {
         startButton.setOnClickListener(this::startGame);
 
 //        TODO remove when not testing
-        startButton.callOnClick();
+//        startButton.callOnClick();
 //        renderCurrentLevel();
 
     }
+
+
 
     public void changeLevelOnClick(int change, Button nextButton, Button previousButton) {
         currentLevel += change;
@@ -155,9 +161,15 @@ public class MainActivity extends AppCompatActivity {
         }
 
         TextView levelTitle = findViewById(R.id.levelTitle);
-        String title = "Level " + (currentLevel + 1) + " of " + game.getLevelCount();
-        levelTitle.setText(title);
+        levelTitle.setText(getResources().getString(R.string.level_count, (currentLevel + 1), game.getLevelCount()));
+
+        TextView goalCount = findViewById(R.id.goalCount);
+        goalCount.setVisibility(View.VISIBLE);
+        goalCount.setText(getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getGoalCount()));
+
     }
+
+
 
 
     private void loadMazesFromFiles() {
@@ -223,6 +235,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    private void loadMessageStringsFromFiles() {
+        try {
+            String messageJsonString = getAssetAsString("messages.json");
+            JSONObject messageJson = new JSONObject(messageJsonString);
+            Arrays.stream(Message.values()).forEach(message -> {
+                try {
+                    JSONObject messageObject = messageJson.getJSONObject(message.toString());
+                    String messageString = messageObject.getString("message");
+                    String description = messageObject.getString("description");
+                    Lookup.messageMap.put(message, new MessageString(messageString, description));
+                } catch (JSONException e) {
+                    Log.e(TAG, "Error parsing message string for " + message, e);
+                }
+            });
+        } catch (IOException e) {
+            Log.e(TAG, "Error loading message strings", e);
+        } catch (JSONException e) {
+            Log.e(TAG, "Error parsing message strings", e);
+        }
+
+    }
 }
 
 

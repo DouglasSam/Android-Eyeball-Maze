@@ -1,0 +1,18 @@
+{
+  "DIFFERENT_SHAPE_OR_COLOR": {
+    "message": "You can't travel to a different shape or color.",
+    "description": "The square you move to must have either the same SYMBOL or the same color as the square you are now on."
+  },
+  "BACKWARDS_MOVE": {
+    "message": "You can't travel backwards.",
+    "description": "The circle with the eyeballs shows where you are and what direction you're facing. You can move FORWARD, or TO THE RIGHT, or TO THE LEFT, but you can't move BACKWARDS."
+  },
+  "MOVING_OVER_BLANK": {
+    "message": "You can't travel over a blank square.",
+    "description": "You can only move to a square that has a symbol on it. You can't move over a blank square."
+  },
+  "MOVING_DIAGONALLY": {
+    "message": "You can't travel diagonally.",
+    "description": "It is not on the same row or the same column as the current square."
+  }
+}

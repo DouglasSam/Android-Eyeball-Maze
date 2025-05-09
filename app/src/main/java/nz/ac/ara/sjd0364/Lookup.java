@@ -10,12 +10,19 @@ import static nz.ac.ara.sjd0364.model.enums.Color.YELLOW;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import nz.ac.ara.sjd0364.model.enums.Direction;
+import nz.ac.ara.sjd0364.model.enums.Message;
 import nz.ac.ara.sjd0364.model.enums.Shape;
 
 public class Lookup {
+
+    protected static final int GRID_MARGIN = 7;
+
+    protected static Map<Message, MessageString> messageMap = new HashMap<>();
 
     protected static Shape getShape(String shape) {
         return switch (shape) {
