@@ -6,4 +6,10 @@
     <color name="outline">#FF000000</color>
     <color name="background">#FFFFFFFF</color>
     <color name="shapeInside">#FFFFFF</color>
+    <color name="buttonBackground">#6750a4</color>
+    <color name="buttonBackgroundDisabled">#e3dfe3</color>
+    <color name="buttonSymbol">#000000</color>
+    <color name="buttonSymbolDisabled">#979598</color>
+
+
 </resources>

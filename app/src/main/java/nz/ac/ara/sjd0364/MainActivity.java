@@ -5,12 +5,16 @@ import static nz.ac.ara.sjd0364.Lookup.getDirection;
 import static nz.ac.ara.sjd0364.Lookup.getShape;
 import static nz.ac.ara.sjd0364.model.enums.Color.BLANK;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.GridLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -43,6 +47,17 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private Game game;
     private int currentLevel = 0;
+    private ImageButton nextButton;
+    private ImageButton previousButton;
+    private ImageButton undoButton;
+    private ImageButton restartButton;
+    private ImageButton playPauseButton;
+    private Button startButton;
+
+    private boolean isPlaying = false;
+    private GridLayout gridLayout;
+    private TextView goalCount;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,50 +70,137 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        loadMessageStringsFromFiles();
+
+        goalCount = findViewById(R.id.goalCount);
+
+//        Set up the level change buttons
+        nextButton = findViewById(R.id.nextLevel);
+        previousButton = findViewById(R.id.backLevel);
+        undoButton = findViewById(R.id.undoMove);
+        restartButton = findViewById(R.id.restart);
+        playPauseButton = findViewById(R.id.playPause);
+
+        nextButton.setOnClickListener(v -> changeLevelOnClick(1,nextButton, previousButton));
+        previousButton.setOnClickListener(v -> changeLevelOnClick(-1, nextButton, previousButton));
+
+        playPauseButton.setOnClickListener(v -> togglePlayPause());
+
+        restartButton.setOnClickListener(v -> {
+            Log.d(TAG, "Restarting game");
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setCancelable(true);
+            builder.setTitle("Confirm");
+            builder.setMessage("Are you sure you want to restart the level?");
+            builder.setPositiveButton("Confirm", (dialog, which) -> {
+                init();
+            });
+            builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+            });
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
+
+        });
+
+        undoButton.setOnClickListener(v -> {
+//            TODO
+        });
+
+
+
+        startButton = findViewById(R.id.startLevel);
+
+        init();
+
+//        TODO remove when not testing
+//        startButton.callOnClick();
+
+
+    }
+
+    private void init() {
+        if (gridLayout != null) {
+            gridLayout.setVisibility(View.GONE);
+            gridLayout = null;
+        }
+
+        isPlaying = false;
+
         game = new Game();
 
         loadMazesFromFiles();
 
-        loadMessageStringsFromFiles();
+        goalCount.setVisibility(View.INVISIBLE);
 
         game.setLevel(currentLevel);
 
-//        Set up the level change buttons
-        Button nextButton = findViewById(R.id.nextLevel);
-        Button previousButton = findViewById(R.id.backLevel);
-        nextButton.setOnClickListener(v -> changeLevelOnClick(1,nextButton, previousButton));
-        previousButton.setOnClickListener(v -> changeLevelOnClick(-1, nextButton, previousButton));
+        undoButton.setEnabled(false);
+        restartButton.setEnabled(false);
+
         previousButton.setEnabled(false);
 
-        Button startButton = findViewById(R.id.startLevel);
-        startButton.setOnClickListener(this::startGame);
+        playPauseButton.setImageResource(R.drawable.play);
 
-//        TODO remove when not testing
-//        startButton.callOnClick();
-//        renderCurrentLevel();
+        startButton.setText(getResources().getString(R.string.start_resume_level, "Start", currentLevel + 1));
+        startButton.setVisibility(View.VISIBLE);
+        startButton.setOnClickListener(v -> this.togglePlayPause());
+
 
     }
 
 
-
-    public void changeLevelOnClick(int change, Button nextButton, Button previousButton) {
+    public void changeLevelOnClick(int change, ImageButton nextButton, ImageButton previousButton) {
         currentLevel += change;
         game.setLevel(currentLevel);
 
         previousButton.setEnabled(currentLevel != 0);
         nextButton.setEnabled(currentLevel != game.getLevelCount() - 1);
 
-        renderCurrentLevel();
+        isPlaying = false;
+        startButton.setVisibility(View.VISIBLE);
+        undoButton.setEnabled(false);
+        restartButton.setEnabled(false);
+        playPauseButton.setImageResource(R.drawable.play);
+        if (gridLayout != null) {
+            gridLayout.setVisibility(View.GONE);
+            gridLayout = null;
+        }
+        startButton.setText(getResources().getString(R.string.start_resume_level, "Start", currentLevel + 1));
     }
 
-    public void startGame(View view) {
-        view.setVisibility(View.GONE);
-        renderCurrentLevel();
+    public void togglePlayPause() {
+        if (isPlaying) {
+            Log.d(TAG, "Pausing game");
+            isPlaying = false;
+            startButton.setVisibility(View.VISIBLE);
+            undoButton.setEnabled(false);
+            restartButton.setEnabled(false);
+            playPauseButton.setImageResource(R.drawable.play);
+            if (gridLayout != null) {
+                gridLayout.setVisibility(View.GONE);
+                startButton.setText(getResources().getString(R.string.start_resume_level, "Resume", currentLevel + 1));
+            }
+        } else {
+            Log.d(TAG, "Starting or resuming game");
+            isPlaying = true;
+            startButton.setVisibility(View.GONE);
+            playPauseButton.setImageResource(R.drawable.pause);
+            undoButton.setEnabled(true);
+            restartButton.setEnabled(true);
+            if (gridLayout == null) {
+                renderCurrentLevel();
+            }
+            else {
+                gridLayout.setVisibility(View.VISIBLE);
+            }
+        }
     }
 
 
     private void renderCurrentLevel() {
-        GridLayout gridLayout = findViewById(R.id.boardFrame);
+        gridLayout = findViewById(R.id.boardFrame);
+        gridLayout.setVisibility(View.VISIBLE);
 
 //        clear the grid layout
         gridLayout.removeAllViews();
@@ -163,13 +265,10 @@ public class MainActivity extends AppCompatActivity {
         TextView levelTitle = findViewById(R.id.levelTitle);
         levelTitle.setText(getResources().getString(R.string.level_count, (currentLevel + 1), game.getLevelCount()));
 
-        TextView goalCount = findViewById(R.id.goalCount);
         goalCount.setVisibility(View.VISIBLE);
         goalCount.setText(getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getGoalCount()));
 
     }
-
-
 
 
     private void loadMazesFromFiles() {
@@ -241,10 +340,12 @@ public class MainActivity extends AppCompatActivity {
             JSONObject messageJson = new JSONObject(messageJsonString);
             Arrays.stream(Message.values()).forEach(message -> {
                 try {
-                    JSONObject messageObject = messageJson.getJSONObject(message.toString());
-                    String messageString = messageObject.getString("message");
-                    String description = messageObject.getString("description");
-                    Lookup.messageMap.put(message, new MessageString(messageString, description));
+                    if (!message.equals(Message.OK)) {
+                        JSONObject messageObject = messageJson.getJSONObject(message.toString());
+                        String messageString = messageObject.getString("message");
+                        String description = messageObject.getString("description");
+                        Lookup.messageMap.put(message, new MessageString(messageString, description));
+                    }
                 } catch (JSONException e) {
                     Log.e(TAG, "Error parsing message string for " + message, e);
                 }

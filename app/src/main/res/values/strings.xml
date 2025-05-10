@@ -1,9 +1,20 @@
 <resources>
     <string name="app_name">Eyeball Maze</string>
-    <string name="start_level">Start Level</string>
+    <string name="start_resume_level">%s Level %d</string>
     <string name="back_level">Back Level</string>
     <string name="next_level">Next Level</string>
     <string name="level_count">Level %d of %d</string>
     <string name="goal_count">Completed %d out of %d goals</string>
-    <string name="level_complete">Level Complete!</string>"
+    <string name="level_complete">Level Complete!</string>
+    <string name="undo_move">Undo Move</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="reset">Reset</string>
+
+    <string name="play_symbol">▶</string>
+    <string name="pause_symbol">⏸</string>
+    <string name="reset_symbol">🔄</string>
+    <string name="undo_symbol">↩</string>
+    <string name="next_symbol">⏭</string>
+    <string name="back_symbol">⏮</string>
 </resources>
