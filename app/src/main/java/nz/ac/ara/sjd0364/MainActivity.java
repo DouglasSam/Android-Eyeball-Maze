@@ -9,12 +9,16 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Chronometer;
 import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -32,6 +36,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import nz.ac.ara.sjd0364.model.BlankSquare;
 import nz.ac.ara.sjd0364.model.Game;
@@ -46,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private Game game;
     private int currentLevel = 0;
+
+
     private ImageButton nextButton;
     private ImageButton previousButton;
     private ImageButton undoButton;
@@ -57,6 +66,13 @@ public class MainActivity extends AppCompatActivity {
     private GridLayout gridLayout;
     private TextView goalCount;
     private TextView levelTitle;
+
+    private Map<Integer, Timer> levelTimeMap;
+
+    private Map<Integer, List<Coordinate>> levelMoves;
+
+    private Timer levelTimer;
+    private LinearLayout levelInfoLayout;
 
 
     @Override
@@ -80,6 +96,8 @@ public class MainActivity extends AppCompatActivity {
         undoButton = findViewById(R.id.undoMove);
         restartButton = findViewById(R.id.restart);
         playPauseButton = findViewById(R.id.playPause);
+        levelTitle = findViewById(R.id.levelTitle);
+
 
         nextButton.setOnClickListener(v -> changeLevelOnClick(1));
         previousButton.setOnClickListener(v -> changeLevelOnClick(-1));
@@ -123,11 +141,17 @@ public class MainActivity extends AppCompatActivity {
         if (gridLayout != null) {
             gridLayout.setVisibility(View.GONE);
             gridLayout = null;
+            levelInfoLayout.removeAllViews();
         }
 
         isPlaying = false;
 
         game = new Game();
+
+        levelTimeMap = new HashMap<>();
+        levelMoves = new HashMap<>();
+
+
 
         loadMazesFromFiles();
 
@@ -156,37 +180,50 @@ public class MainActivity extends AppCompatActivity {
                 (game.getGoalCount() + game.getCompletedGoalCount())));
         if (game.getGoalCount() == 0) {
             Log.d(TAG, "Level complete");
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setCancelable(true);
-            builder.setTitle("Level Complete");
-            builder.setMessage("You have completed the level!");
-            builder.setPositiveButton("Next Level", (dialog, which) -> {
+
+            levelTimer.stop();
+
+            String message = "You have completed the level!\n" +
+                    "Time: " + levelTimer.getFormattedElapsedTimeToMillis() + "\n" +
+                    "Moves: " + levelMoves.get(currentLevel).size() + "\n" +
+                    "Level: " + (currentLevel + 1) + "/" + game.getLevelCount();
+
+            AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
+            alertBuilder.setCancelable(true);
+            alertBuilder.setTitle("Level Complete");
+            alertBuilder.setMessage(message);
+            alertBuilder.setPositiveButton("Next Level", (dialog, which) -> {
                 changeLevelOnClick(1);
             });
-            builder.setNegativeButton("View Level", (dialog, which) -> {
+            alertBuilder.setNegativeButton("View Level", (dialog, which) -> {
+
+                playPauseButton.setEnabled(false);
+                undoButton.setEnabled(false);
             });
 
-            Dialog dialog = builder.create();
+            Dialog dialog = alertBuilder.create();
             dialog.show();
         }
     }
 
 
     public void changeLevelOnClick(int change) {
+        togglePlayPause(true);
         currentLevel += change;
         game.setLevel(currentLevel);
 
         goalCount.setVisibility(View.INVISIBLE);
 
-
+        playPauseButton.setEnabled(true);
         previousButton.setEnabled(currentLevel != 0);
         nextButton.setEnabled(currentLevel != game.getLevelCount() - 1);
 
         levelTitle.setText(R.string.app_name);
 
-        togglePlayPause(true);
+
         if (gridLayout != null) {
             gridLayout = null;
+            levelInfoLayout.removeAllViews();
         }
         startButton.setText(getResources().getString(R.string.start_resume_level, "Start", currentLevel + 1));
     }
@@ -197,6 +234,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void togglePlayPause(boolean pause) {
         if (pause) {
+            if (levelTimeMap.get(currentLevel) != null && levelTimer != null) {
+                levelTimer.stop();
+                levelTimer.setVisibility(View.INVISIBLE);
+            }
             Log.d(TAG, "Pausing game");
             isPlaying = false;
             startButton.setVisibility(View.VISIBLE);
@@ -216,11 +257,15 @@ public class MainActivity extends AppCompatActivity {
             restartButton.setEnabled(true);
             if (gridLayout == null) {
                 renderCurrentLevel();
-            }
-            else {
+            } else {
                 gridLayout.setVisibility(View.VISIBLE);
+                levelTimer.start();
+                levelTimer.setVisibility(View.VISIBLE);
             }
+
+
         }
+
     }
 
 
@@ -287,13 +332,27 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        levelTitle = findViewById(R.id.levelTitle);
         levelTitle.setText(getResources().getString(R.string.level_count, (currentLevel + 1), game.getLevelCount()));
 
         goalCount.setVisibility(View.VISIBLE);
         goalCount.setText(getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getGoalCount()));
 
+        if (levelMoves.get(currentLevel) == null) {
+            levelMoves.put(currentLevel, new java.util.ArrayList<>());
+        }
 
+        if (levelTimeMap.get(currentLevel) != null) {
+            levelTimer = levelTimeMap.get(currentLevel);
+        } else {
+            levelTimer = new Timer(this);
+        }
+
+        levelInfoLayout = findViewById(R.id.levelInfo);
+        levelInfoLayout.addView(levelTimer);
+
+        levelTimeMap.put(currentLevel, levelTimer);
+        levelTimer.start();
+        levelTimer.setVisibility(View.VISIBLE);
     }
 
 
@@ -383,6 +442,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+
+    record Coordinate(int row, int column) { }
+
 }
 
 

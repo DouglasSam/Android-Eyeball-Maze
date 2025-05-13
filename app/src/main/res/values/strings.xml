@@ -17,4 +17,5 @@
     <string name="undo_symbol">↩</string>
     <string name="next_symbol">⏭</string>
     <string name="back_symbol">⏮</string>
+    <string name="time_s">Time: %s</string>
 </resources>
