@@ -7,7 +7,6 @@ import static nz.ac.ara.sjd0364.model.enums.Color.BLANK;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -57,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isPlaying = false;
     private GridLayout gridLayout;
     private TextView goalCount;
+    private TextView levelTitle;
 
 
     @Override
@@ -81,8 +81,8 @@ public class MainActivity extends AppCompatActivity {
         restartButton = findViewById(R.id.restart);
         playPauseButton = findViewById(R.id.playPause);
 
-        nextButton.setOnClickListener(v -> changeLevelOnClick(1,nextButton, previousButton));
-        previousButton.setOnClickListener(v -> changeLevelOnClick(-1, nextButton, previousButton));
+        nextButton.setOnClickListener(v -> changeLevelOnClick(1));
+        previousButton.setOnClickListener(v -> changeLevelOnClick(-1));
 
         playPauseButton.setOnClickListener(v -> togglePlayPause());
 
@@ -138,7 +138,8 @@ public class MainActivity extends AppCompatActivity {
         undoButton.setEnabled(false);
         restartButton.setEnabled(false);
 
-        previousButton.setEnabled(false);
+        previousButton.setEnabled(currentLevel != 0);
+        nextButton.setEnabled(currentLevel != game.getLevelCount() - 1);
 
         playPauseButton.setImageResource(R.drawable.play);
 
@@ -149,28 +150,53 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void updateGoals() {
+        goalCount.setText(getResources().getString(R.string.goal_count,
+                game.getCompletedGoalCount(),
+                (game.getGoalCount() + game.getCompletedGoalCount())));
+        if (game.getGoalCount() == 0) {
+            Log.d(TAG, "Level complete");
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setCancelable(true);
+            builder.setTitle("Level Complete");
+            builder.setMessage("You have completed the level!");
+            builder.setPositiveButton("Next Level", (dialog, which) -> {
+                changeLevelOnClick(1);
+            });
+            builder.setNegativeButton("View Level", (dialog, which) -> {
+            });
 
-    public void changeLevelOnClick(int change, ImageButton nextButton, ImageButton previousButton) {
+            Dialog dialog = builder.create();
+            dialog.show();
+        }
+    }
+
+
+    public void changeLevelOnClick(int change) {
         currentLevel += change;
         game.setLevel(currentLevel);
+
+        goalCount.setVisibility(View.INVISIBLE);
+
 
         previousButton.setEnabled(currentLevel != 0);
         nextButton.setEnabled(currentLevel != game.getLevelCount() - 1);
 
-        isPlaying = false;
-        startButton.setVisibility(View.VISIBLE);
-        undoButton.setEnabled(false);
-        restartButton.setEnabled(false);
-        playPauseButton.setImageResource(R.drawable.play);
+        levelTitle.setText(R.string.app_name);
+
+        togglePlayPause(true);
         if (gridLayout != null) {
-            gridLayout.setVisibility(View.GONE);
             gridLayout = null;
         }
         startButton.setText(getResources().getString(R.string.start_resume_level, "Start", currentLevel + 1));
     }
 
     public void togglePlayPause() {
-        if (isPlaying) {
+        togglePlayPause(isPlaying);
+    }
+
+    public void togglePlayPause(boolean pause) {
+        if (pause) {
             Log.d(TAG, "Pausing game");
             isPlaying = false;
             startButton.setVisibility(View.VISIBLE);
@@ -222,7 +248,6 @@ public class MainActivity extends AppCompatActivity {
                 params.rowSpec = GridLayout.spec(i, 1f);
                 params.columnSpec = GridLayout.spec(j, 1f);
 
-                Log.d(TAG, "onCreate: "+ shape + " " + color);
                 if (shape != Shape.BLANK && color != BLANK) {
                     image = new PlayableSquareView(this, i, j, game, params);
                 }
@@ -262,11 +287,12 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        TextView levelTitle = findViewById(R.id.levelTitle);
+        levelTitle = findViewById(R.id.levelTitle);
         levelTitle.setText(getResources().getString(R.string.level_count, (currentLevel + 1), game.getLevelCount()));
 
         goalCount.setVisibility(View.VISIBLE);
         goalCount.setText(getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getGoalCount()));
+
 
     }
 

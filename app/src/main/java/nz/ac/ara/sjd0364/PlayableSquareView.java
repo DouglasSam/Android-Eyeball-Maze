@@ -39,7 +39,7 @@ public class PlayableSquareView extends AppCompatImageView {
     private final int column;
     private final Game game;
 
-    private final Context context;
+    private final MainActivity context;
 
     private Bitmap shapeBitmap;
 
@@ -51,15 +51,15 @@ public class PlayableSquareView extends AppCompatImageView {
 
 
 
-    public PlayableSquareView(Context context, int row, int column, Game game, GridLayout.LayoutParams params) {
+    public PlayableSquareView(MainActivity context, int row, int column, Game game, GridLayout.LayoutParams params) {
         this(context, null, row, column, game, params);
     }
 
-    public PlayableSquareView(Context context, AttributeSet attrs, int row, int column, Game game, GridLayout.LayoutParams params) {
+    public PlayableSquareView(MainActivity context, AttributeSet attrs, int row, int column, Game game, GridLayout.LayoutParams params) {
         this(context, null, 0, row, column, game, params);
     }
 
-    public PlayableSquareView(Context context, AttributeSet attrs, int defStyleAttr, int row, int column, Game game, GridLayout.LayoutParams params) {
+    public PlayableSquareView(MainActivity context, AttributeSet attrs, int defStyleAttr, int row, int column, Game game, GridLayout.LayoutParams params) {
         super(context, attrs, defStyleAttr);
 
         this.context = context;
@@ -125,7 +125,12 @@ public class PlayableSquareView extends AppCompatImageView {
                 }
 
             }
+            if (game.hasGoalAt(row, column)) {
+                this.setBackgroundColor(Color.WHITE);
+            }
             game.moveTo(row, column);
+            context.updateGoals();
+
             toggleEyeballRendering();
         }
         else {
