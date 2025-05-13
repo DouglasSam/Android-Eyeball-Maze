@@ -9,12 +9,9 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.CountDownTimer;
-import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Chronometer;
 import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -36,9 +33,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import nz.ac.ara.sjd0364.model.BlankSquare;
 import nz.ac.ara.sjd0364.model.Game;
@@ -51,10 +45,8 @@ import nz.ac.ara.sjd0364.model.interfaces.Square;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
-    private Game game;
-    private int currentLevel = 0;
 
-
+    private GameController gameController;
     private ImageButton nextButton;
     private ImageButton previousButton;
     private ImageButton undoButton;
@@ -62,14 +54,9 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton playPauseButton;
     private Button startButton;
 
-    private boolean isPlaying = false;
     private GridLayout gridLayout;
     private TextView goalCount;
     private TextView levelTitle;
-
-    private Map<Integer, Timer> levelTimeMap;
-
-    private Map<Integer, List<Coordinate>> levelMoves;
 
     private Timer levelTimer;
     private LinearLayout levelInfoLayout;
@@ -86,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        loadMessageStringsFromFiles();
+        gameController = new GameController(this);
 
         goalCount = findViewById(R.id.goalCount);
 
@@ -144,30 +131,19 @@ public class MainActivity extends AppCompatActivity {
             levelInfoLayout.removeAllViews();
         }
 
-        isPlaying = false;
-
-        game = new Game();
-
-        levelTimeMap = new HashMap<>();
-        levelMoves = new HashMap<>();
-
-
-
-        loadMazesFromFiles();
+        gameController.init();
 
         goalCount.setVisibility(View.INVISIBLE);
-
-        game.setLevel(currentLevel);
 
         undoButton.setEnabled(false);
         restartButton.setEnabled(false);
 
-        previousButton.setEnabled(currentLevel != 0);
-        nextButton.setEnabled(currentLevel != game.getLevelCount() - 1);
+        previousButton.setEnabled(gameController.getCurrentLevel() != 0);
+        nextButton.setEnabled(gameController.getCurrentLevel() != gameController.getGame().getLevelCount() - 1);
 
         playPauseButton.setImageResource(R.drawable.play);
 
-        startButton.setText(getResources().getString(R.string.start_resume_level, "Start", currentLevel + 1));
+        startButton.setText(gameController.getStartButtonText());
         startButton.setVisibility(View.VISIBLE);
         startButton.setOnClickListener(v -> this.togglePlayPause());
 
@@ -176,47 +152,49 @@ public class MainActivity extends AppCompatActivity {
 
     public void updateGoals() {
         goalCount.setText(getResources().getString(R.string.goal_count,
-                game.getCompletedGoalCount(),
-                (game.getGoalCount() + game.getCompletedGoalCount())));
-        if (game.getGoalCount() == 0) {
+                gameController.getGame().getCompletedGoalCount(),
+                (gameController.getGame().getGoalCount()
+                        + gameController.getGame().getCompletedGoalCount())));
+        if (gameController.getGame().getGoalCount() == 0) {
             Log.d(TAG, "Level complete");
 
             levelTimer.stop();
 
-            String message = "You have completed the level!\n" +
-                    "Time: " + levelTimer.getFormattedElapsedTimeToMillis() + "\n" +
-                    "Moves: " + levelMoves.get(currentLevel).size() + "\n" +
-                    "Level: " + (currentLevel + 1) + "/" + game.getLevelCount();
-
-            AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
-            alertBuilder.setCancelable(true);
-            alertBuilder.setTitle("Level Complete");
-            alertBuilder.setMessage(message);
-            alertBuilder.setPositiveButton("Next Level", (dialog, which) -> {
-                changeLevelOnClick(1);
-            });
-            alertBuilder.setNegativeButton("View Level", (dialog, which) -> {
-
-                playPauseButton.setEnabled(false);
-                undoButton.setEnabled(false);
-            });
-
-            Dialog dialog = alertBuilder.create();
+            Dialog dialog = getEndLevelDialog();
             dialog.show();
         }
+    }
+
+    private Dialog getEndLevelDialog() {
+        String message = gameController.getEndText();
+
+        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
+        alertBuilder.setCancelable(true);
+        alertBuilder.setTitle("Level Complete");
+        alertBuilder.setMessage(message);
+        alertBuilder.setPositiveButton("Next Level", (dialog, which) -> {
+            changeLevelOnClick(1);
+        });
+        alertBuilder.setNegativeButton("View Level", (dialog, which) -> {
+
+            playPauseButton.setEnabled(false);
+            undoButton.setEnabled(false);
+        });
+
+        return alertBuilder.create();
     }
 
 
     public void changeLevelOnClick(int change) {
         togglePlayPause(true);
-        currentLevel += change;
-        game.setLevel(currentLevel);
+        gameController.changeCurrentLevel(change);
+        gameController.setCurrentLevel();
 
         goalCount.setVisibility(View.INVISIBLE);
 
         playPauseButton.setEnabled(true);
-        previousButton.setEnabled(currentLevel != 0);
-        nextButton.setEnabled(currentLevel != game.getLevelCount() - 1);
+        previousButton.setEnabled(!gameController.isFirstLevel());
+        nextButton.setEnabled(!gameController.isLastLevel());
 
         levelTitle.setText(R.string.app_name);
 
@@ -225,32 +203,32 @@ public class MainActivity extends AppCompatActivity {
             gridLayout = null;
             levelInfoLayout.removeAllViews();
         }
-        startButton.setText(getResources().getString(R.string.start_resume_level, "Start", currentLevel + 1));
+        startButton.setText(gameController.getStartButtonText());
     }
 
     public void togglePlayPause() {
-        togglePlayPause(isPlaying);
+        togglePlayPause(gameController.isPlaying());
     }
 
     public void togglePlayPause(boolean pause) {
         if (pause) {
-            if (levelTimeMap.get(currentLevel) != null && levelTimer != null) {
+            if (levelTimer != null) {
                 levelTimer.stop();
                 levelTimer.setVisibility(View.INVISIBLE);
             }
             Log.d(TAG, "Pausing game");
-            isPlaying = false;
+            gameController.setPlaying(false);
             startButton.setVisibility(View.VISIBLE);
             undoButton.setEnabled(false);
             restartButton.setEnabled(false);
             playPauseButton.setImageResource(R.drawable.play);
             if (gridLayout != null) {
                 gridLayout.setVisibility(View.GONE);
-                startButton.setText(getResources().getString(R.string.start_resume_level, "Resume", currentLevel + 1));
+                startButton.setText(gameController.getStartButtonText());
             }
         } else {
             Log.d(TAG, "Starting or resuming game");
-            isPlaying = true;
+            gameController.setPlaying(true);
             startButton.setVisibility(View.GONE);
             playPauseButton.setImageResource(R.drawable.pause);
             undoButton.setEnabled(true);
@@ -262,10 +240,7 @@ public class MainActivity extends AppCompatActivity {
                 levelTimer.start();
                 levelTimer.setVisibility(View.VISIBLE);
             }
-
-
         }
-
     }
 
 
@@ -277,7 +252,9 @@ public class MainActivity extends AppCompatActivity {
         gridLayout.removeAllViews();
         gridLayout.setBackgroundColor(Color.BLACK);
 
-        Log.d(TAG, "rendering: " + currentLevel + " " + game.getLevelHeight() + " " + game.getLevelWidth());
+        Log.d(TAG, "rendering: " + gameController.getCurrentLevel());
+
+        Game game = gameController.getGame();
 
 
         for (int i = 0; i < game.getLevelHeight(); i++) {
@@ -332,80 +309,27 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        levelTitle.setText(getResources().getString(R.string.level_count, (currentLevel + 1), game.getLevelCount()));
+        levelTitle.setText(gameController.getLevelTitle());
 
         goalCount.setVisibility(View.VISIBLE);
         goalCount.setText(getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getGoalCount()));
 
-        if (levelMoves.get(currentLevel) == null) {
-            levelMoves.put(currentLevel, new java.util.ArrayList<>());
-        }
+        gameController.render();
 
-        if (levelTimeMap.get(currentLevel) != null) {
-            levelTimer = levelTimeMap.get(currentLevel);
-        } else {
-            levelTimer = new Timer(this);
-        }
+        levelTimer = gameController.getCurrentLevelTimer();
 
         levelInfoLayout = findViewById(R.id.levelInfo);
         levelInfoLayout.addView(levelTimer);
 
-        levelTimeMap.put(currentLevel, levelTimer);
         levelTimer.start();
         levelTimer.setVisibility(View.VISIBLE);
     }
 
 
-    private void loadMazesFromFiles() {
-        // Load mazes from resources or any other source
-        // This is just a placeholder for the actual implementation
-        Log.d(TAG, "Loading mazes from files");
 
-        try {
-            String[] mazes = getAssets().list("mazes");
-            if (mazes != null) {
-                for (String asset : mazes) {
-                    Log.d(TAG, "Loading maze: " + asset);
-                    JSONObject mazeJson = new JSONObject(getAssetAsString("mazes/" + asset));
-                    JSONArray mazeSize = mazeJson.getJSONArray("size");
-                    int rows = mazeSize.getInt(0);
-                    int cols = mazeSize.getInt(1);
-                    game.addLevel(rows, cols);
-                    JSONArray board = mazeJson.getJSONArray("board");
-                    for (int i = 0; i < rows; i++) {
-                        JSONArray row = board.getJSONArray(i);
-                        for (int j = 0; j < cols; j++) {
-                            String cellDate = row.getString(j);
-                            Shape shape = getShape(cellDate.substring(0, 1));
-                            nz.ac.ara.sjd0364.model.enums.Color color = Lookup.getColorFromChar(cellDate.charAt(1));
-                            Square square = new PlayableSquare(color, shape);
-                            if (shape == Shape.BLANK && color == BLANK) {
-                                square = new BlankSquare();
-                            }
-                            game.addSquare(square, i, j);
-                        }
-                    }
-                    JSONArray startPos = mazeJson.getJSONArray("startPlayer");
-                    Direction direction = getDirection(mazeJson.getString("startOrientation"));
-                    game.addEyeball(startPos.getInt(0), startPos.getInt(1), direction);
 
-                    JSONArray goals = mazeJson.getJSONArray("goals");
-                    for (int i = 0; i < goals.length()-1; i+=2) {
-                        int goalRow = goals.getInt(i);
-                        int goalCol = goals.getInt(i+1);
-                        game.addGoal(goalRow, goalCol);
-                    }
-                }
-            } else {
-                Log.w(TAG, "No mazes found in assets");
-            }
-
-        } catch (Exception e) {
-            Log.e(TAG, "Error loading mazes", e);
-        }
-    }
-
-    private String getAssetAsString(String assetFilePath) throws IOException {
+    protected String getAssetAsString(String assetFilePath) throws IOException {
+//        TODO replace with GSON
         InputStream fileStream = getAssets().open(assetFilePath);
         BufferedReader fileReader = new BufferedReader(new InputStreamReader(fileStream));
         StringBuilder stringBuilder = new StringBuilder();
@@ -416,31 +340,6 @@ public class MainActivity extends AppCompatActivity {
         fileReader.close();
         fileStream.close();
         return stringBuilder.toString();
-    }
-
-
-    private void loadMessageStringsFromFiles() {
-        try {
-            String messageJsonString = getAssetAsString("messages.json");
-            JSONObject messageJson = new JSONObject(messageJsonString);
-            Arrays.stream(Message.values()).forEach(message -> {
-                try {
-                    if (!message.equals(Message.OK)) {
-                        JSONObject messageObject = messageJson.getJSONObject(message.toString());
-                        String messageString = messageObject.getString("message");
-                        String description = messageObject.getString("description");
-                        Lookup.messageMap.put(message, new MessageString(messageString, description));
-                    }
-                } catch (JSONException e) {
-                    Log.e(TAG, "Error parsing message string for " + message, e);
-                }
-            });
-        } catch (IOException e) {
-            Log.e(TAG, "Error loading message strings", e);
-        } catch (JSONException e) {
-            Log.e(TAG, "Error parsing message strings", e);
-        }
-
     }
 
     record Coordinate(int row, int column) { }
