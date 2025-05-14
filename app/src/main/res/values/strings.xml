@@ -18,4 +18,5 @@
     <string name="next_symbol">⏭</string>
     <string name="back_symbol">⏮</string>
     <string name="time_s">Time: %s</string>
+    <string name="move_count">Moves: %d</string>
 </resources>

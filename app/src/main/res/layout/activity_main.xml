@@ -51,18 +51,30 @@
             android:textSize="24sp"
             android:textStyle="bold"
             android:gravity="center"
+            android:layout_margin="5dp"
             />
 
-        <LinearLayout
+
+
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/levelInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center"
+            android:layout_marginHorizontal="5dp"
+
             >
 
+            <TextView
+                android:id="@+id/moveCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/move_count"
+                android:visibility="invisible"
+                app:layout_constraintEnd_toEndOf="@id/levelInfo"
+                app:layout_constraintTop_toTopOf="parent"/>
 
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </LinearLayout>
 

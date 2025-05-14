@@ -33,11 +33,17 @@ public class GameController {
     private boolean isPlaying = false;
     private Map<Integer, Timer> levelTimeMap;
 
-    private Map<Integer, List<MainActivity.Coordinate>> levelMoves;
+    private Map<Integer, List<Coordinate>> levelMoves;
+
+    private Map<Integer, Boolean> levelCompletedMap;
 
     public GameController(MainActivity context) {
         this.context = context;
         this.game = new Game();
+
+        levelTimeMap = new HashMap<>();
+        levelMoves = new HashMap<>();
+        levelCompletedMap = new HashMap<>();
 
         loadMessageStringsFromFiles();
     }
@@ -49,16 +55,16 @@ public class GameController {
 
         loadMazesFromFiles();
 
-        levelTimeMap = new HashMap<>();
-        levelMoves = new HashMap<>();
+        levelTimeMap.remove(currentLevel);
+        levelMoves.remove(currentLevel);
+        levelCompletedMap.remove(currentLevel);
 
         game.setLevel(currentLevel);
     }
 
     public void render() {
-        if (levelMoves.get(currentLevel) == null) {
-            levelMoves.put(currentLevel, new java.util.ArrayList<>());
-        }
+        levelMoves.computeIfAbsent(currentLevel, k -> new java.util.ArrayList<>());
+
 
         Timer levelTimer;
 
@@ -76,6 +82,20 @@ public class GameController {
         return levelTimeMap.get(currentLevel);
     }
 
+    public void addMove(Coordinate coordinate) {
+        if (!levelMoves.containsKey(currentLevel)) {
+            levelMoves.put(currentLevel, new java.util.ArrayList<>());
+        }
+        levelMoves.get(currentLevel).add(coordinate);
+    }
+
+    public void completeLevel() {
+        levelCompletedMap.put(currentLevel, true);
+    }
+
+    public boolean isLevelCompleted() {
+        return Boolean.TRUE.equals(levelCompletedMap.getOrDefault(currentLevel, false));
+    }
 
     public int getCurrentLevel() {
         return currentLevel;
@@ -87,6 +107,24 @@ public class GameController {
 
     public void setCurrentLevel() {
         game.setLevel(currentLevel);
+    }
+
+    public String getGoalCountText() {
+       String r = context.getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getGoalCount());
+       if (game.getGoalCount() == 0) {
+           r = context.getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getCompletedGoalCount());
+       } else {
+           r = context.getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getGoalCount());
+       }
+       return r;
+    }
+
+    public String getMoveCountText() {
+        if (levelMoves.containsKey(currentLevel)) {
+            return context.getResources().getString(R.string.move_count, levelMoves.get(currentLevel).size());
+        } else {
+            return context.getResources().getString(R.string.move_count, 0);
+        }
     }
 
     public boolean isFirstLevel() {
@@ -101,6 +139,9 @@ public class GameController {
         String prefix = "Start";
         if (levelTimeMap.containsKey(currentLevel)) {
             prefix = "Resume";
+        }
+        if (levelCompletedMap.containsKey(currentLevel)) {
+            prefix = "View";
         }
 
         return context.getResources().getString(R.string.start_resume_level,
@@ -125,14 +166,6 @@ public class GameController {
 
     public void setLevelTimeMap(Map<Integer, Timer> levelTimeMap) {
         this.levelTimeMap = levelTimeMap;
-    }
-
-    public Map<Integer, List<MainActivity.Coordinate>> getLevelMoves() {
-        return levelMoves;
-    }
-
-    public void setLevelMoves(Map<Integer, List<MainActivity.Coordinate>> levelMoves) {
-        this.levelMoves = levelMoves;
     }
 
     public Game getGame() {

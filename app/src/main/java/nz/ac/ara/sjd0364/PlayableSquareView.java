@@ -9,7 +9,6 @@ import static nz.ac.ara.sjd0364.Lookup.messageMap;
 import static nz.ac.ara.sjd0364.model.enums.Color.BLANK;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -35,8 +34,7 @@ import nz.ac.ara.sjd0364.model.enums.Shape;
 @SuppressLint("ViewConstructor")
 public class PlayableSquareView extends AppCompatImageView {
 
-    private final int row;
-    private final int column;
+    private final Coordinate coordinate;
     private final Game game;
 
     private final MainActivity context;
@@ -63,8 +61,7 @@ public class PlayableSquareView extends AppCompatImageView {
         super(context, attrs, defStyleAttr);
 
         this.context = context;
-        this.row = row;
-        this.column = column;
+        coordinate = new Coordinate(row, column);
         this.game = game;
         this.params = params;
 
@@ -74,43 +71,43 @@ public class PlayableSquareView extends AppCompatImageView {
     private void init() {
         this.setBackgroundColor(Color.WHITE);
 
-        Shape shape = game.getShapeAt(row, column);
-        nz.ac.ara.sjd0364.model.enums.Color color = game.getColorAt(row, column);
+        Shape shape = game.getShapeAt(coordinate.row(), coordinate.column());
+        nz.ac.ara.sjd0364.model.enums.Color color = game.getColorAt(coordinate.row(), coordinate.column());
 //
         shapeBitmap = getSquareBitmap(getDrawableIDFromShape(shape), color);
         eyeballDrawable = ContextCompat.getDrawable(context, R.drawable.eyeball);
 
 ////                    TODO make better
-        if (game.hasGoalAt(row, column)) {
+        if (game.hasGoalAt(coordinate.row(), coordinate.column())) {
           this.setBackgroundColor(Color.RED);
         }
         int topMargin = GRID_MARGIN;
         int bottomMargin = GRID_MARGIN;
         int leftMargin = GRID_MARGIN;
         int rightMargin = GRID_MARGIN;
-        if (row == 0) {
+        if (coordinate.row() == 0) {
             topMargin *= 2;
         }
-        if (row == game.getLevelHeight() - 1) {
+        if (coordinate.row() == game.getLevelHeight() - 1) {
             bottomMargin *= 2;
         }
-        if (column == 0) {
+        if (coordinate.column() == 0) {
             leftMargin *= 2;
         }
-        if (column == game.getLevelWidth() - 1) {
+        if (coordinate.column() == game.getLevelWidth() - 1) {
             rightMargin *= 2;
         }
         params.setMargins(leftMargin, topMargin, rightMargin, bottomMargin);
         this.setLayoutParams(params);
 
-        renderingEyeball = !(row == game.getEyeballRow() && column == game.getEyeballColumn());
+        renderingEyeball = !(coordinate.row() == game.getEyeballRow() && coordinate.column() == game.getEyeballColumn());
         toggleEyeballRendering();
 
         this.setOnClickListener(this::onClick);
     }
 
     private void onClick(View view) {
-        if (game.canMoveTo(row, column)) {
+        if (game.canMoveTo(coordinate.row(), coordinate.column())) {
             ViewParent parent = getParent();
             if (parent instanceof GridLayout gridLayout) {
                 int row = game.getEyeballRow();  // Change based on the row you want
@@ -125,16 +122,18 @@ public class PlayableSquareView extends AppCompatImageView {
                 }
 
             }
-            if (game.hasGoalAt(row, column)) {
+            boolean onGoal = game.hasGoalAt(coordinate.row(), coordinate.column());
+            game.moveTo(coordinate.row(), coordinate.column());
+            if (onGoal) {
                 this.setBackgroundColor(Color.WHITE);
             }
-            game.moveTo(row, column);
-            context.updateGoals();
+
+            context.updateMoves(coordinate, onGoal);
 
             toggleEyeballRendering();
         }
         else {
-            MessageString messageString = messageMap.get(game.messageIfMovingTo(row, column));
+            MessageString messageString = messageMap.get(game.messageIfMovingTo(coordinate.row(), coordinate.column()));
             String message;
             if (messageString == null) {
                 message = "Unknown error";

@@ -1,8 +1,6 @@
 package nz.ac.ara.sjd0364;
 
 import static nz.ac.ara.sjd0364.Lookup.GRID_MARGIN;
-import static nz.ac.ara.sjd0364.Lookup.getDirection;
-import static nz.ac.ara.sjd0364.Lookup.getShape;
 import static nz.ac.ara.sjd0364.model.enums.Color.BLANK;
 
 import android.app.AlertDialog;
@@ -11,36 +9,29 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Space;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Arrays;
 
-import nz.ac.ara.sjd0364.model.BlankSquare;
 import nz.ac.ara.sjd0364.model.Game;
-import nz.ac.ara.sjd0364.model.PlayableSquare;
-import nz.ac.ara.sjd0364.model.enums.Direction;
-import nz.ac.ara.sjd0364.model.enums.Message;
 import nz.ac.ara.sjd0364.model.enums.Shape;
-import nz.ac.ara.sjd0364.model.interfaces.Square;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -59,7 +50,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView levelTitle;
 
     private Timer levelTimer;
-    private LinearLayout levelInfoLayout;
+    private ConstraintLayout levelInfoLayout;
+
+    private TextView moveCount;
 
 
     @Override
@@ -150,18 +143,22 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void updateGoals() {
-        goalCount.setText(getResources().getString(R.string.goal_count,
-                gameController.getGame().getCompletedGoalCount(),
-                (gameController.getGame().getGoalCount()
-                        + gameController.getGame().getCompletedGoalCount())));
-        if (gameController.getGame().getGoalCount() == 0) {
-            Log.d(TAG, "Level complete");
+    public void updateMoves(Coordinate coordinate, boolean onGoal) {
 
-            levelTimer.stop();
+        gameController.addMove(coordinate);
+        moveCount.setText(gameController.getMoveCountText());
+        if (onGoal) {
+            goalCount.setText(gameController.getGoalCountText());
+            if (gameController.getGame().getGoalCount() == 0) {
+                Log.d(TAG, "Level complete");
 
-            Dialog dialog = getEndLevelDialog();
-            dialog.show();
+                levelTimer.stop();
+
+                gameController.completeLevel();
+
+                Dialog dialog = getEndLevelDialog();
+                dialog.show();
+            }
         }
     }
 
@@ -201,7 +198,9 @@ public class MainActivity extends AppCompatActivity {
 
         if (gridLayout != null) {
             gridLayout = null;
-            levelInfoLayout.removeAllViews();
+            levelInfoLayout.removeView(levelTimer);
+            moveCount.setVisibility(View.INVISIBLE);
+//            levelInfoLayout.removeAllViews();
         }
         startButton.setText(gameController.getStartButtonText());
     }
@@ -312,16 +311,23 @@ public class MainActivity extends AppCompatActivity {
         levelTitle.setText(gameController.getLevelTitle());
 
         goalCount.setVisibility(View.VISIBLE);
-        goalCount.setText(getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getGoalCount()));
+        goalCount.setText(gameController.getGoalCountText());
 
         gameController.render();
+
+        moveCount = findViewById(R.id.moveCount);
+        moveCount.setText(gameController.getMoveCountText());
+        moveCount.setVisibility(View.VISIBLE);
 
         levelTimer = gameController.getCurrentLevelTimer();
 
         levelInfoLayout = findViewById(R.id.levelInfo);
         levelInfoLayout.addView(levelTimer);
+//        levelInfoLayout.addView(moveCount);
 
-        levelTimer.start();
+        if (!gameController.isLevelCompleted()) {
+            levelTimer.start();
+        }
         levelTimer.setVisibility(View.VISIBLE);
     }
 
@@ -341,8 +347,6 @@ public class MainActivity extends AppCompatActivity {
         fileStream.close();
         return stringBuilder.toString();
     }
-
-    record Coordinate(int row, int column) { }
 
 }
 
