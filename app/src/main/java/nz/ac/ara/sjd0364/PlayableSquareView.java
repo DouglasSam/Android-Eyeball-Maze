@@ -47,6 +47,8 @@ public class PlayableSquareView extends AppCompatImageView {
 
     private boolean renderingEyeball;
 
+    private boolean wasGoal = false;
+
 
 
     public PlayableSquareView(MainActivity context, int row, int column, Game game, GridLayout.LayoutParams params) {
@@ -64,6 +66,9 @@ public class PlayableSquareView extends AppCompatImageView {
         coordinate = new Coordinate(row, column);
         this.game = game;
         this.params = params;
+        if (this.game.hasGoalAt(coordinate.row(), coordinate.column())) {
+            wasGoal = true;
+        }
 
         init();
     }
@@ -119,18 +124,27 @@ public class PlayableSquareView extends AppCompatImageView {
                 PlayableSquareView oldEyeballSquare = (PlayableSquareView) gridLayout.getChildAt(index);
                 if (oldEyeballSquare != null) {
                     oldEyeballSquare.toggleEyeballRendering();
+                    if (oldEyeballSquare.isWasGoal()) {
+                        oldEyeballSquare.removeShape();
+                    }
+                    Coordinate oldPos = new Coordinate(game.getEyeballRow(), game.getEyeballColumn());
+
+                    Move move = new Move(game.getEyeballDirection(), oldPos , wasGoal);
+
+                    boolean onGoal = game.hasGoalAt(coordinate.row(), coordinate.column());
+                    game.moveTo(coordinate.row(), coordinate.column());
+
+                    if (onGoal) {
+                        this.setBackgroundColor(Color.WHITE);
+                    }
+
+                    context.updateMoves(move, onGoal);
+
+                    toggleEyeballRendering();
                 }
 
             }
-            boolean onGoal = game.hasGoalAt(coordinate.row(), coordinate.column());
-            game.moveTo(coordinate.row(), coordinate.column());
-            if (onGoal) {
-                this.setBackgroundColor(Color.WHITE);
-            }
 
-            context.updateMoves(coordinate, onGoal);
-
-            toggleEyeballRendering();
         }
         else {
             MessageString messageString = messageMap.get(game.messageIfMovingTo(coordinate.row(), coordinate.column()));
@@ -167,6 +181,17 @@ public class PlayableSquareView extends AppCompatImageView {
     @Override
     public void setOnClickListener(@Nullable OnClickListener l) {
         super.setOnClickListener(l);
+
+    }
+
+    public boolean isWasGoal() {
+        return wasGoal;
+    }
+
+    public void removeShape() {
+        this.setImageBitmap(null);
+        this.setImageDrawable(null);
+        this.setBackgroundColor(Color.WHITE);
 
     }
 

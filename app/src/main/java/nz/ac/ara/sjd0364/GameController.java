@@ -33,7 +33,7 @@ public class GameController {
     private boolean isPlaying = false;
     private Map<Integer, Timer> levelTimeMap;
 
-    private Map<Integer, List<Coordinate>> levelMoves;
+    private Map<Integer, List<Move>> levelMoves;
 
     private Map<Integer, Boolean> levelCompletedMap;
 
@@ -82,11 +82,12 @@ public class GameController {
         return levelTimeMap.get(currentLevel);
     }
 
-    public void addMove(Coordinate coordinate) {
+    public void addMove(Move move) {
         if (!levelMoves.containsKey(currentLevel)) {
             levelMoves.put(currentLevel, new java.util.ArrayList<>());
         }
-        levelMoves.get(currentLevel).add(coordinate);
+        levelMoves.get(currentLevel).add(move);
+        Log.d(TAG, "addMove: " + move);
     }
 
     public void completeLevel() {

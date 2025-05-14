@@ -143,9 +143,9 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void updateMoves(Coordinate coordinate, boolean onGoal) {
+    public void updateMoves(Move move, boolean onGoal) {
 
-        gameController.addMove(coordinate);
+        gameController.addMove(move);
         moveCount.setText(gameController.getMoveCountText());
         if (onGoal) {
             goalCount.setText(gameController.getGoalCountText());
