@@ -9,13 +9,10 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.Space;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -77,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
         restartButton = findViewById(R.id.restart);
         playPauseButton = findViewById(R.id.playPause);
         levelTitle = findViewById(R.id.levelTitle);
+        moveCount = findViewById(R.id.moveCount);
 
 
         nextButton.setOnClickListener(v -> changeLevelOnClick(1));
@@ -102,7 +100,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         undoButton.setOnClickListener(v -> {
-//            TODO
+            gameController.undoMove();
+            moveCount.setText(gameController.getMoveCountText());
         });
 
 
@@ -121,7 +120,8 @@ public class MainActivity extends AppCompatActivity {
         if (gridLayout != null) {
             gridLayout.setVisibility(View.GONE);
             gridLayout = null;
-            levelInfoLayout.removeAllViews();
+            levelInfoLayout.removeView(levelTimer);
+            moveCount.setVisibility(View.INVISIBLE);
         }
 
         gameController.init();
@@ -146,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
     public void updateMoves(Move move, boolean onGoal) {
 
         gameController.addMove(move);
+        enableUndoButton(true);
         moveCount.setText(gameController.getMoveCountText());
         if (onGoal) {
             goalCount.setText(gameController.getGoalCountText());
@@ -183,6 +184,38 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void changeLevelOnClick(int change) {
+
+        if (gameController.isPlaying() && !gameController.isLevelCompleted()) {
+            levelTimer.stop();
+            levelInfoLayout.setVisibility(View.GONE);
+            gridLayout.setVisibility(View.GONE);
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setCancelable(true);
+            builder.setTitle("Confirm");
+            builder.setMessage("Are you sure you want to change levels? The game will be paused and the level saved.");
+            builder.setPositiveButton("Confirm", (dialog, which) -> {
+                changeLevel(change);
+            });
+            builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+                levelTimer.start();
+                gridLayout.setVisibility(View.VISIBLE);
+                levelInfoLayout.setVisibility(View.VISIBLE);
+            });
+            builder.setOnCancelListener(dialog -> {
+                levelTimer.start();
+                gridLayout.setVisibility(View.VISIBLE);
+                levelInfoLayout.setVisibility(View.VISIBLE);
+            });
+            builder.create().show();
+
+        } else {
+            changeLevel(change);
+        }
+
+
+    }
+
+    private void changeLevel(int change) {
         togglePlayPause(true);
         gameController.changeCurrentLevel(change);
         gameController.setCurrentLevel();
@@ -213,9 +246,8 @@ public class MainActivity extends AppCompatActivity {
         if (pause) {
             if (levelTimer != null) {
                 levelTimer.stop();
-                levelTimer.setVisibility(View.INVISIBLE);
+                levelInfoLayout.setVisibility(View.INVISIBLE);
             }
-            Log.d(TAG, "Pausing game");
             gameController.setPlaying(false);
             startButton.setVisibility(View.VISIBLE);
             undoButton.setEnabled(false);
@@ -226,22 +258,23 @@ public class MainActivity extends AppCompatActivity {
                 startButton.setText(gameController.getStartButtonText());
             }
         } else {
-            Log.d(TAG, "Starting or resuming game");
             gameController.setPlaying(true);
             startButton.setVisibility(View.GONE);
             playPauseButton.setImageResource(R.drawable.pause);
-            undoButton.setEnabled(true);
             restartButton.setEnabled(true);
             if (gridLayout == null) {
                 renderCurrentLevel();
             } else {
                 gridLayout.setVisibility(View.VISIBLE);
                 levelTimer.start();
-                levelTimer.setVisibility(View.VISIBLE);
+                levelInfoLayout.setVisibility(View.VISIBLE);
             }
         }
     }
 
+    public void enableUndoButton(boolean enabled) {
+        undoButton.setEnabled(enabled);
+    }
 
     private void renderCurrentLevel() {
         gridLayout = findViewById(R.id.boardFrame);
@@ -257,7 +290,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         for (int i = 0; i < game.getLevelHeight(); i++) {
-            for (int j = 0; j < game.getLevelWidth(); j++) {;
+            for (int j = 0; j < game.getLevelWidth(); j++) {
 
                 Shape shape = game.getShapeAt(i, j);
                 nz.ac.ara.sjd0364.model.enums.Color color = game.getColorAt(i, j);
@@ -315,7 +348,7 @@ public class MainActivity extends AppCompatActivity {
 
         gameController.render();
 
-        moveCount = findViewById(R.id.moveCount);
+
         moveCount.setText(gameController.getMoveCountText());
         moveCount.setVisibility(View.VISIBLE);
 
@@ -328,9 +361,22 @@ public class MainActivity extends AppCompatActivity {
         if (!gameController.isLevelCompleted()) {
             levelTimer.start();
         }
-        levelTimer.setVisibility(View.VISIBLE);
+        levelInfoLayout.setVisibility(View.VISIBLE);
     }
 
+    public PlayableSquareView getSquareView(int row, int column) {
+        if (gridLayout != null) {
+            View view = gridLayout.getChildAt(row * gameController.getGame().getLevelWidth() + column);
+            if (view instanceof PlayableSquareView) {
+                return (PlayableSquareView) view;
+            }
+        }
+        return null;
+    }
+
+    public PlayableSquareView getSquareView(Coordinate coordinate) {
+        return getSquareView(coordinate.row(), coordinate.column());
+    }
 
 
 

@@ -11,6 +11,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -33,9 +34,11 @@ public class GameController {
     private boolean isPlaying = false;
     private Map<Integer, Timer> levelTimeMap;
 
-    private Map<Integer, List<Move>> levelMoves;
+    private final Map<Integer, List<Move>> levelMoves;
 
-    private Map<Integer, Boolean> levelCompletedMap;
+    private final Map<Integer, Boolean> levelCompletedMap;
+
+    private final Map<Integer, Integer> levelMoveCountMap;
 
     public GameController(MainActivity context) {
         this.context = context;
@@ -44,8 +47,49 @@ public class GameController {
         levelTimeMap = new HashMap<>();
         levelMoves = new HashMap<>();
         levelCompletedMap = new HashMap<>();
+        levelMoveCountMap = new HashMap<>();
 
         loadMessageStringsFromFiles();
+    }
+
+    public void undoMove() {
+        if (levelMoves.containsKey(currentLevel) && !levelMoves.get(currentLevel).isEmpty()) {
+            Move lastMove = levelMoves.compute(currentLevel, (level, moves) -> {
+                if (moves.size() == 1) {
+                    context.enableUndoButton(false);
+                }
+                return moves;
+            }).remove(levelMoves.get(currentLevel).size() - 1);
+
+            PlayableSquareView currentSquareView = context.getSquareView(game.getEyeballRow(), game.getEyeballColumn());
+
+            if (currentSquareView.isWasGoal()) {
+                game.addGoal(
+                        currentSquareView.getCoordinate().row(),
+                        currentSquareView.getCoordinate().column());
+                game.addSquare(
+                        currentSquareView.getOriginalPlayableSquare(),
+                        currentSquareView.getCoordinate().row(),
+                        currentSquareView.getCoordinate().column());
+                currentSquareView.setGoal();
+
+            }
+            currentSquareView.toggleEyeballRendering();
+
+            Coordinate coordinate = lastMove.squareView().getCoordinate();
+
+            game.addEyeball(
+                    coordinate.row(),
+                    coordinate.column(),
+                    lastMove.direction());
+
+            lastMove.squareView().toggleEyeballRendering();
+
+            levelMoveCountMap.computeIfPresent(currentLevel, (level, count) -> count + 1);
+
+        } else {
+            Log.d(TAG, "No moves to undo");
+        }
     }
 
     public void init() {
@@ -57,6 +101,7 @@ public class GameController {
 
         levelTimeMap.remove(currentLevel);
         levelMoves.remove(currentLevel);
+        levelMoveCountMap.remove(currentLevel);
         levelCompletedMap.remove(currentLevel);
 
         game.setLevel(currentLevel);
@@ -64,6 +109,7 @@ public class GameController {
 
     public void render() {
         levelMoves.computeIfAbsent(currentLevel, k -> new java.util.ArrayList<>());
+        levelMoveCountMap.putIfAbsent(currentLevel, 0);
 
 
         Timer levelTimer;
@@ -87,7 +133,7 @@ public class GameController {
             levelMoves.put(currentLevel, new java.util.ArrayList<>());
         }
         levelMoves.get(currentLevel).add(move);
-        Log.d(TAG, "addMove: " + move);
+        levelMoveCountMap.computeIfPresent(currentLevel, (level, count) -> count + 1);
     }
 
     public void completeLevel() {
@@ -111,21 +157,17 @@ public class GameController {
     }
 
     public String getGoalCountText() {
-       String r = context.getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getGoalCount());
-       if (game.getGoalCount() == 0) {
-           r = context.getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getCompletedGoalCount());
-       } else {
-           r = context.getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getGoalCount());
-       }
-       return r;
+        String r;
+        if (game.getGoalCount() == 0) {
+            r = context.getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getCompletedGoalCount());
+        } else {
+            r = context.getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getGoalCount());
+        }
+        return r;
     }
 
     public String getMoveCountText() {
-        if (levelMoves.containsKey(currentLevel)) {
-            return context.getResources().getString(R.string.move_count, levelMoves.get(currentLevel).size());
-        } else {
-            return context.getResources().getString(R.string.move_count, 0);
-        }
+        return context.getResources().getString(R.string.move_count, levelMoveCountMap.getOrDefault(currentLevel, 0));
     }
 
     public boolean isFirstLevel() {
@@ -158,6 +200,7 @@ public class GameController {
     }
 
     public void setPlaying(boolean playing) {
+        levelMoves.compute(currentLevel, (level, moves) -> new ArrayList<>());
         isPlaying = playing;
     }
 

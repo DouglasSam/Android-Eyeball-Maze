@@ -1,6 +1,6 @@
 # Feature List for the Game of Eyeball Maze
 
-## At present 24 marks out of 40
+## At present 26 marks out of 40
 
 ## MUST features:
 ### 10 out of 10 features
@@ -33,13 +33,15 @@
 - [ ] Play a short relevant and suitable video to explain the rules of the game
 
 ## COULD features:
-### 2 out of 7 features
-#### At 2 marks each - 4 Marks, out of max of 10
+
+### 3 out of 7 features
+
+#### At 2 marks each - 6 Marks, out of max of 10
 - [x] Calculate and display the elapsed time
 - [x] Pause a game
   - [x] Pause a game to stop the timer, and un-pause the game to continue the timer
   - [x] Pause a game to hide the level, and un-pause the game to show the level again
-- [ ] Support 'undo' action
+- [x] Support 'undo' action
 - [ ] Provide the playback feature of a game  
   * _The playback feature allows you to record gameplay as you play and play it back later._
 - [ ] Allow the user to save a game status in a file or database during playing

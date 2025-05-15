@@ -1,11 +1,11 @@
 package nz.ac.ara.sjd0364.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import nz.ac.ara.sjd0364.model.enums.Direction;
 import nz.ac.ara.sjd0364.model.enums.Message;
 import nz.ac.ara.sjd0364.model.interfaces.Square;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A level that is played in as well as the level logic
@@ -40,6 +40,7 @@ public class Level {
      */
     protected void addEyeball(int row, int column , Direction direction) {
         testCoordinatesBoundaries(row, column);
+        removeGoal = false; // Reset the remove goal flag just in case eyeball is added/moved in the middle of a game
         eyeball = new Eyeball(direction, getSquare(row, column), row, column);
     }
 
