@@ -64,7 +64,7 @@ public class Level {
     protected void addGoal(int row, int column) {
         testCoordinatesBoundaries(row, column);
         goals.add(new Goal(row, column));
-        totalGoals++;
+        totalGoals = goals.size();
     }
 
     /**
