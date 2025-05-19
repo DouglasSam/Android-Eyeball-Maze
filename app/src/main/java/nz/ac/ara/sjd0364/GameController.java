@@ -29,8 +29,6 @@ public class GameController {
 
     private final Map<Integer, Boolean> levelCompletedMap;
 
-    private final Map<Integer, Integer> levelMoveCountMap;
-
     private final Map<Integer, GridLayout> levelGridMap;
     private final MazeReader mazeReader;
 
@@ -41,7 +39,6 @@ public class GameController {
         levelTimeMap = new HashMap<>();
         levelMoves = new HashMap<>();
         levelCompletedMap = new HashMap<>();
-        levelMoveCountMap = new HashMap<>();
         levelGridMap = new HashMap<>();
 
         mazeReader = new MazeReader(context, game);
@@ -82,8 +79,6 @@ public class GameController {
 
             lastMove.squareView().toggleEyeballRendering();
 
-            levelMoveCountMap.computeIfPresent(currentLevel, (level, count) -> count + 1);
-
         } else {
             Log.d(TAG, "No moves to undo");
         }
@@ -98,7 +93,6 @@ public class GameController {
 
         levelTimeMap.remove(currentLevel);
         levelMoves.remove(currentLevel);
-        levelMoveCountMap.remove(currentLevel);
         levelCompletedMap.remove(currentLevel);
         levelGridMap.remove(currentLevel);
 
@@ -114,7 +108,6 @@ public class GameController {
             moves.clear();
             return moves;
         });
-        levelMoveCountMap.put(currentLevel, 0);
         levelCompletedMap.put(currentLevel, false);
         levelTimeMap.put(currentLevel, new Timer(context));
         mazeReader.loadSpecificMazeFromFile(currentLevel);
@@ -127,7 +120,6 @@ public class GameController {
 
     public void render() {
         levelMoves.computeIfAbsent(currentLevel, k -> new java.util.ArrayList<>());
-        levelMoveCountMap.putIfAbsent(currentLevel, 0);
 
 
         Timer levelTimer;
@@ -151,7 +143,6 @@ public class GameController {
             levelMoves.put(currentLevel, new java.util.ArrayList<>());
         }
         levelMoves.get(currentLevel).add(move);
-        levelMoveCountMap.computeIfPresent(currentLevel, (level, count) -> count + 1);
     }
 
     public void completeLevel() {
@@ -185,7 +176,11 @@ public class GameController {
     }
 
     public String getMoveCountText() {
-        return context.getResources().getString(R.string.move_count, levelMoveCountMap.getOrDefault(currentLevel, 0));
+        return context.getResources().getString(R.string.move_count, getMoveCount());
+    }
+
+    public int getMoveCount() {
+        return levelMoves.getOrDefault(currentLevel, new ArrayList<>()).size();
     }
 
     public boolean isFirstLevel() {
@@ -218,7 +213,7 @@ public class GameController {
     }
 
     public void setPlaying(boolean playing) {
-        levelMoves.compute(currentLevel, (level, moves) -> new ArrayList<>());
+//        levelMoves.compute(currentLevel, (level, moves) -> new ArrayList<>());
         isPlaying = playing;
     }
 

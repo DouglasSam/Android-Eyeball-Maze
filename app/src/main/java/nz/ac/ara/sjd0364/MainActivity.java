@@ -267,6 +267,9 @@ public class MainActivity extends AppCompatActivity {
         } else {
             gameController.setPlaying(true);
             startButton.setVisibility(View.GONE);
+            if (gameController.getMoveCount() != 0) {
+                undoButton.setEnabled(true);
+            }
             playPauseButton.setImageResource(R.drawable.pause);
             restartButton.setEnabled(true);
             renderCurrentLevel();
