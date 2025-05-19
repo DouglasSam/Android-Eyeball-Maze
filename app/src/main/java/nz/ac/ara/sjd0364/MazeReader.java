@@ -7,6 +7,7 @@ import static nz.ac.ara.sjd0364.model.enums.Color.BLANK;
 import android.util.Log;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import nz.ac.ara.sjd0364.model.BlankSquare;
@@ -40,20 +41,43 @@ public class MazeReader {
                 Log.e(TAG, "Maze not found");
                 return;
             }
-            JSONArray startPos = mazeJson.getJSONArray("startPlayer");
-            Direction direction = getDirection(mazeJson.getString("startOrientation"));
-
-            game.addEyeball(startPos.getInt(0), startPos.getInt(1), direction);
-
-            JSONArray goals = mazeJson.getJSONArray("goals");
-            for (int i = 0; i < goals.length() - 1; i += 2) {
-                int goalRow = goals.getInt(i);
-                int goalCol = goals.getInt(i + 1);
-                game.addGoal(goalRow, goalCol);
-            }
+            loadLevel(mazeJson, false);
         } catch (Exception e) {
             Log.e(TAG, "Error loading maze", e);
 
+        }
+    }
+
+    private void loadLevel(JSONObject mazeJson, boolean addToGame) throws JSONException {
+        JSONArray mazeSize = mazeJson.getJSONArray("size");
+        int rows = mazeSize.getInt(0);
+        int cols = mazeSize.getInt(1);
+        if (addToGame) {
+            game.addLevel(rows, cols);
+        }
+        JSONArray board = mazeJson.getJSONArray("board");
+        for (int i = 0; i < rows; i++) {
+            JSONArray row = board.getJSONArray(i);
+            for (int j = 0; j < cols; j++) {
+                String cellDate = row.getString(j);
+                Shape shape = getShape(cellDate.substring(0, 1));
+                nz.ac.ara.sjd0364.model.enums.Color color = Lookup.getColorFromChar(cellDate.charAt(1));
+                Square square = new PlayableSquare(color, shape);
+                if (shape == Shape.BLANK && color == BLANK) {
+                    square = new BlankSquare();
+                }
+                game.addSquare(square, i, j);
+            }
+        }
+        JSONArray startPos = mazeJson.getJSONArray("startPlayer");
+        Direction direction = getDirection(mazeJson.getString("startOrientation"));
+        game.addEyeball(startPos.getInt(0), startPos.getInt(1), direction);
+
+        JSONArray goals = mazeJson.getJSONArray("goals");
+        for (int i = 0; i < goals.length() - 1; i += 2) {
+            int goalRow = goals.getInt(i);
+            int goalCol = goals.getInt(i + 1);
+            game.addGoal(goalRow, goalCol);
         }
     }
 
@@ -88,34 +112,7 @@ public class MazeReader {
                 for (String asset : mazes) {
                     Log.d(TAG, "Loading maze: " + asset);
                     JSONObject mazeJson = new JSONObject(Lookup.getAssetAsString(context, "mazes/" + asset));
-                    JSONArray mazeSize = mazeJson.getJSONArray("size");
-                    int rows = mazeSize.getInt(0);
-                    int cols = mazeSize.getInt(1);
-                    game.addLevel(rows, cols);
-                    JSONArray board = mazeJson.getJSONArray("board");
-                    for (int i = 0; i < rows; i++) {
-                        JSONArray row = board.getJSONArray(i);
-                        for (int j = 0; j < cols; j++) {
-                            String cellDate = row.getString(j);
-                            Shape shape = getShape(cellDate.substring(0, 1));
-                            nz.ac.ara.sjd0364.model.enums.Color color = Lookup.getColorFromChar(cellDate.charAt(1));
-                            Square square = new PlayableSquare(color, shape);
-                            if (shape == Shape.BLANK && color == BLANK) {
-                                square = new BlankSquare();
-                            }
-                            game.addSquare(square, i, j);
-                        }
-                    }
-                    JSONArray startPos = mazeJson.getJSONArray("startPlayer");
-                    Direction direction = getDirection(mazeJson.getString("startOrientation"));
-                    game.addEyeball(startPos.getInt(0), startPos.getInt(1), direction);
-
-                    JSONArray goals = mazeJson.getJSONArray("goals");
-                    for (int i = 0; i < goals.length() - 1; i += 2) {
-                        int goalRow = goals.getInt(i);
-                        int goalCol = goals.getInt(i + 1);
-                        game.addGoal(goalRow, goalCol);
-                    }
+                    loadLevel(mazeJson, true);
                 }
             } else {
                 Log.w(TAG, "No mazes found in assets");
