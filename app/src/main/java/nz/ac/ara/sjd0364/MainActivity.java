@@ -91,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
 
         undoButton.setOnClickListener(v -> {
             gameController.undoMove();
+            goalCount.setText(gameController.getGoalCountText());
             moveCount.setText(gameController.getMoveCountText());
         });
 
@@ -254,7 +255,9 @@ public class MainActivity extends AppCompatActivity {
             if (levelTimer != null) {
                 levelTimer.stop();
             }
-            levelInfoLayout.setVisibility(View.INVISIBLE);
+            if (levelInfoLayout != null) {
+                levelInfoLayout.setVisibility(View.INVISIBLE);
+            }
             gameController.setPlaying(false);
             startButton.setVisibility(View.VISIBLE);
             undoButton.setEnabled(false);

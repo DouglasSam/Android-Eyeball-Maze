@@ -170,7 +170,7 @@ public class GameController {
         if (game.getGoalCount() == 0) {
             r = context.getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getCompletedGoalCount());
         } else {
-            r = context.getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getGoalCount());
+            r = context.getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getGoalCount() + game.getCompletedGoalCount());
         }
         return r;
     }
