@@ -25,9 +25,9 @@
 - [x] Only update the changed parts of the level when playing the game
 - [ ] Allow the user to select and load the initial status of a level from a file or database
 - [x] Display an updated move count for player character
-- [ ] Display a GUI element to control sound on and off
-- [ ] Play a short relevant and suitable audio/video if player character has won
-- [ ] Play a short relevant and suitable audio/video if player character intends to move incorrectly
+- [x] Display a GUI element to control sound on and off
+- [x] Play a short relevant and suitable audio/video if player character has won
+- [x] Play a short relevant and suitable audio/video if player character intends to move incorrectly
 - [x] A button or menu to restart the current maze
 - [x] Display a dialogue with options if player character has won or lost
 - [ ] Play a short relevant and suitable video to explain the rules of the game
@@ -47,3 +47,12 @@
 - [ ] Allow the user to save a game status in a file or database during playing
 - [ ] Allow the user to select and load a status of a previous unfinished game from a file or database to continue playing
 - [ ] Automatically scale the graphical user interface of the application on devices with different screen sizes (Responsive Design)
+
+
+## attribution
+
+- https://www.zapsplat.com/music/retro-8-bit-video-game-level-complete-music/
+- https://www.zapsplat.com/music/game-sound-retro-digital-fanfare-level-complete-or-achievement-tone-5/?registration_redirect=1&item_id=67619
+- https://www.zapsplat.com/music/game-sound-arcade-tone-incorrect-error-fail-etc/
+- https://www.zapsplat.com/music/retro-arcade-game-lose-fail/
+-

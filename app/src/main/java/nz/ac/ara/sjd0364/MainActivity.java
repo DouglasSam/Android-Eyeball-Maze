@@ -6,6 +6,7 @@ import static nz.ac.ara.sjd0364.model.enums.Color.BLANK;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -88,9 +89,7 @@ public class MainActivity extends AppCompatActivity {
             builder.setCancelable(true);
             builder.setTitle("Confirm");
             builder.setMessage("Are you sure you want to restart the level?");
-            builder.setPositiveButton("Confirm", (dialog, which) -> {
-                init();
-            });
+            builder.setPositiveButton("Confirm", (dialog, which) -> init());
             builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> {
             });
 
@@ -151,6 +150,7 @@ public class MainActivity extends AppCompatActivity {
         if (onGoal) {
             goalCount.setText(gameController.getGoalCountText());
             if (gameController.getGame().getGoalCount() == 0) {
+                playWinSound();
                 Log.d(TAG, "Level complete");
 
                 levelTimer.stop();
@@ -170,9 +170,7 @@ public class MainActivity extends AppCompatActivity {
         alertBuilder.setCancelable(true);
         alertBuilder.setTitle("Level Complete");
         alertBuilder.setMessage(message);
-        alertBuilder.setPositiveButton("Next Level", (dialog, which) -> {
-            changeLevelOnClick(1);
-        });
+        alertBuilder.setPositiveButton("Next Level", (dialog, which) -> changeLevelOnClick(1));
         alertBuilder.setNegativeButton("View Level", (dialog, which) -> {
 
             playPauseButton.setEnabled(false);
@@ -193,9 +191,7 @@ public class MainActivity extends AppCompatActivity {
             builder.setCancelable(true);
             builder.setTitle("Confirm");
             builder.setMessage("Are you sure you want to change levels? The game will be paused and the level saved.");
-            builder.setPositiveButton("Confirm", (dialog, which) -> {
-                changeLevel(change);
-            });
+            builder.setPositiveButton("Confirm", (dialog, which) -> changeLevel(change));
             builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> {
                 levelTimer.start();
                 gridLayout.setVisibility(View.VISIBLE);
@@ -239,6 +235,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void togglePlayPause() {
+        playClickClackSound();
         togglePlayPause(gameController.isPlaying());
     }
 
@@ -394,6 +391,34 @@ public class MainActivity extends AppCompatActivity {
         return stringBuilder.toString();
     }
 
+    public void playDingSound() {
+        playSound(R.raw.ding);
+
+    }
+
+    public void playDudSound() {
+        playSound(R.raw.dud);
+    }
+
+    /**
+     * Win sound courtesy of <a href="https://uppbeat.io/sfx/puff-of-magic-treasure-chest-heavy/644/1179">https://uppbeat.io/sfx/puff-of-magic-treasure-chest-heavy/644/1179</a>
+     */
+    public void playWinSound() {
+        playSound(R.raw.win);
+    }
+
+    public void playClickClackSound() {
+        playSound(R.raw.clickclack);
+    }
+
+    private void playSound(int soundResource) {
+        MuteButton muteButton = findViewById(R.id.muteButton);
+        if (muteButton != null && !muteButton.isMuted()) {
+            MediaPlayer mediaPlayer = MediaPlayer.create(this, soundResource);
+            mediaPlayer.setOnCompletionListener(MediaPlayer::release); // Release resources when done
+            mediaPlayer.start(); // no need to call prepare(); create() does that for you
+        }
+    }
 }
 
 

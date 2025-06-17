@@ -126,8 +126,11 @@ public class PlayableSquareView extends AppCompatImageView {
     private void onClick(View view) {
         if (game.canMoveTo(coordinate.row(), coordinate.column())) {
             move();
+//            Play ding sound on success
+            context.playDingSound();
         }
         else {
+            context.playDudSound();
             MessageString messageString = messageMap.get(game.messageIfMovingTo(coordinate.row(), coordinate.column()));
             String message;
             if (messageString == null) {

@@ -154,11 +154,22 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:backgroundTint="@color/button_background_tint"
+            android:adjustViewBounds="true"
             android:contentDescription="@string/next_symbol"
-            android:src="@drawable/next"
             android:scaleType="fitCenter"
-            android:adjustViewBounds="true"/>
+            android:src="@drawable/next" />
     </LinearLayout>
+
+    <nz.ac.ara.sjd0364.MuteButton
+        android:id="@+id/muteButton"
+        android:layout_width="36dp"
+        android:layout_margin="12dp"
+        android:layout_height="36dp"
+        android:scaleType="fitXY"
+        android:contentDescription="@string/toggle_mute"
+        android:background="@null"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
