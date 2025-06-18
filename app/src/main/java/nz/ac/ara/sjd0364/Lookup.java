@@ -87,6 +87,7 @@ public class Lookup {
     }
 
     protected static int getRotationFromDirection(Direction direction) {
+        System.out.println("Direction: " + direction);
         return switch (direction) {
             case UP -> 0;
             case DOWN -> 180;

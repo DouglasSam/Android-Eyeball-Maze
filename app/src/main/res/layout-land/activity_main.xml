@@ -156,4 +156,16 @@
             android:src="@drawable/next" />
     </LinearLayout>
 
+    <nz.ac.ara.sjd0364.MuteButton
+        android:id="@+id/muteButton"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_margin="12dp"
+        android:background="@null"
+        android:contentDescription="@string/toggle_mute"
+        android:scaleType="fitXY"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

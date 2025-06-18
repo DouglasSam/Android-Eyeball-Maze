@@ -86,8 +86,7 @@ public class MainActivity extends AppCompatActivity {
         playPauseButton.setOnClickListener(v -> togglePlayPause());
 
         restartButton.setOnClickListener(v -> {
-            resetLeve();
-
+            resetLevel();
         });
 
         undoButton.setOnClickListener(v -> {
@@ -102,13 +101,9 @@ public class MainActivity extends AppCompatActivity {
 
         init();
 
-//        TODO remove when not testing
-//        startButton.callOnClick();
-
-
     }
 
-    private void resetLeve() {
+    private void resetLevel() {
         levelTimer.stop();
         levelInfoLayout.setVisibility(View.GONE);
         gameController.getCurrentLevelGrid().setVisibility(View.GONE);
@@ -251,6 +246,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void togglePlayPause(boolean pause) {
         if (pause) {
+//            Pause the game
             if (levelTimer != null) {
                 levelTimer.stop();
             }
@@ -267,6 +263,7 @@ public class MainActivity extends AppCompatActivity {
             }
             startButton.setText(gameController.getStartButtonText());
         } else {
+//            Play the game
             gameController.setPlaying(true);
             startButton.setVisibility(View.GONE);
             if (gameController.getMoveCount() != 0) {
@@ -291,11 +288,11 @@ public class MainActivity extends AppCompatActivity {
             gridLayout = getGameBoardView();
             gameController.addCurrentLevelGrid(gridLayout);
         }
-
+//        Add the grid layout to the main layout if it is not already there
         if (main.indexOfChild(gridLayout) == -1) {
             main.addView(gridLayout);
         }
-
+//        Remove any old level timers still in the layout
         if (levelTimer != null) {
             levelInfoLayout.removeView(levelTimer);
         }
@@ -316,7 +313,6 @@ public class MainActivity extends AppCompatActivity {
         if (levelInfoLayout.indexOfChild(levelTimer) == -1) {
             levelInfoLayout.addView(levelTimer);
         }
-//        levelInfoLayout.addView(moveCount);
 
         if (!gameController.isLevelCompleted()) {
             levelTimer.start();
@@ -411,7 +407,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void playDingSound() {
         playSound(R.raw.ding);
-
     }
 
     public void playDudSound() {

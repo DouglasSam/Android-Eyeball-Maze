@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import nz.ac.ara.sjd0364.model.Game;
 import nz.ac.ara.sjd0364.model.enums.Message;
@@ -87,10 +88,9 @@ public class GameController {
     public void init() {
         isPlaying = false;
 
-//        game = new Game();
-
         mazeReader.loadAllMazesFromFiles();
 
+//        Reset all details about the current level
         levelTimeMap.remove(currentLevel);
         levelMoves.remove(currentLevel);
         levelCompletedMap.remove(currentLevel);
@@ -230,10 +230,11 @@ public class GameController {
     }
 
     public String getEndText() {
-        return "You have completed the level!\n" +
-                "Time: " + levelTimeMap.get(currentLevel).getFormattedElapsedTimeToMillis() + "\n" +
-                "Moves: " + levelMoves.get(currentLevel).size() + "\n" +
-                "Level: " + (currentLevel + 1) + "/" + game.getLevelCount();
+        return "You have completed the level!\nTime: " +
+                Objects.requireNonNull(levelTimeMap.get(currentLevel)).getFormattedElapsedTimeToMillis()
+                + "\nMoves: " +
+                Objects.requireNonNull(levelMoves.get(currentLevel)).size() +
+                "\nLevel: " + (currentLevel + 1) + "/" + game.getLevelCount();
     }
 
     private void loadMessageStringsFromFiles() {

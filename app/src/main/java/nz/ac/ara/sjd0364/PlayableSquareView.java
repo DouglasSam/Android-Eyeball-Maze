@@ -90,7 +90,7 @@ public class PlayableSquareView extends AppCompatImageView {
         shapeBitmap = getSquareBitmap(getDrawableIDFromShape(originalShape), originalColor);
         eyeballDrawable = ContextCompat.getDrawable(context, R.drawable.eyeball);
 
-////                    TODO make better
+
         if (game.hasGoalAt(coordinate.row(), coordinate.column())) {
             setGoal();
         }
@@ -119,16 +119,13 @@ public class PlayableSquareView extends AppCompatImageView {
         this.setOnClickListener(this::onClick);
     }
 
-    public void setGoal() {
-        this.setBackgroundColor(Color.RED);
-    }
-
     private void onClick(View view) {
-        if (game.canMoveTo(coordinate.row(), coordinate.column())) {
+        if (game.canMoveTo(coordinate.row(), coordinate.column()) && !renderingEyeball) {
             move();
 //            Play ding sound on success
             context.playDingSound();
         }
+//        Cannot move to this square, so play dud sound and show Snack bar with reason
         else {
             context.playDudSound();
             MessageString messageString = messageMap.get(game.messageIfMovingTo(coordinate.row(), coordinate.column()));
@@ -140,19 +137,23 @@ public class PlayableSquareView extends AppCompatImageView {
                 message = messageString.message();
             }
 
-//        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
             Snackbar snackbar = Snackbar.make(view, message, Snackbar.LENGTH_SHORT);
             snackbar.setAnchorView((View) this.getParent());
             snackbar.show();
         }
     }
 
+    public void setGoal() {
+        this.setBackgroundColor(Color.RED);
+    }
+
     private void move() {
         ViewParent parent = getParent();
         if (parent instanceof GridLayout gridLayout) {
-            int row = game.getEyeballRow();  // Change based on the row you want
-            int column = game.getEyeballColumn();  // Change based on the column you want
-            int totalColumns = gridLayout.getColumnCount(); // Number of columns in your GridLayout
+//            Get index of 2d object in 1d array
+            int row = game.getEyeballRow();
+            int column = game.getEyeballColumn();
+            int totalColumns = gridLayout.getColumnCount();
 
             int index = row * totalColumns + column;
 
@@ -181,18 +182,17 @@ public class PlayableSquareView extends AppCompatImageView {
     }
 
     public void toggleEyeballRendering() {
+//        No longer rendering the eyeball
         if (renderingEyeball) {
             this.setImageBitmap(shapeBitmap);
             renderingEyeball = false;
-//            this.setBackgroundColor(Color.WHITE);
+//        Rendering the eyeball
         } else {
             Bitmap eyeballBitmap = getEyeBallBitmap(getRotationFromDirection(game.getEyeballDirection()));
             Bitmap squareBitmap = combineTwoImagesAsOne(shapeBitmap, eyeballBitmap);
             this.setImageBitmap(squareBitmap);
             renderingEyeball = true;
-//            this.setBackgroundColor(Color.YELLOW);
         }
-
     }
 
     @Override
@@ -238,7 +238,6 @@ public class PlayableSquareView extends AppCompatImageView {
 
     private Bitmap getEyeBallBitmap(float rotate) {
 
-//        TODO make an option
         eyeballDrawable.setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
         if (eyeballDrawable instanceof VectorDrawable) {
             Bitmap bitmap = Bitmap.createBitmap(eyeballDrawable.getIntrinsicWidth(), eyeballDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
