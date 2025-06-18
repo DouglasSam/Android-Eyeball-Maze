@@ -7,9 +7,14 @@ import static nz.ac.ara.sjd0364.model.enums.Color.PURPLE;
 import static nz.ac.ara.sjd0364.model.enums.Color.RED;
 import static nz.ac.ara.sjd0364.model.enums.Color.YELLOW;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -105,6 +110,20 @@ public class Lookup {
         canvas.drawBitmap(oneImage, 0f, 0f, null);
         canvas.drawBitmap(theOtherImage, 10, 10, null);
         return resultImage;
+    }
+
+    protected static String getAssetAsString(Context context, String assetFilePath) throws IOException {
+//        TODO replace with GSON
+        InputStream fileStream = context.getAssets().open(assetFilePath);
+        BufferedReader fileReader = new BufferedReader(new InputStreamReader(fileStream));
+        StringBuilder stringBuilder = new StringBuilder();
+        String line;
+        while ((line = fileReader.readLine()) != null) {
+            stringBuilder.append(line);
+        }
+        fileReader.close();
+        fileStream.close();
+        return stringBuilder.toString();
     }
 
 

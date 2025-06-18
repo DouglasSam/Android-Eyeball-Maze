@@ -17,16 +17,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
 import nz.ac.ara.sjd0364.model.Game;
 import nz.ac.ara.sjd0364.model.enums.Shape;
@@ -43,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton playPauseButton;
     private Button startButton;
 
-    private GridLayout gridLayout;
+    //    private GridLayout gridLayout;
     private TextView goalCount;
     private TextView levelTitle;
 
@@ -51,6 +47,10 @@ public class MainActivity extends AppCompatActivity {
     private ConstraintLayout levelInfoLayout;
 
     private TextView moveCount;
+
+    private GridLayout gridLayoutMaster;
+
+    private ConstraintLayout main;
 
 
     @Override
@@ -76,6 +76,8 @@ public class MainActivity extends AppCompatActivity {
         playPauseButton = findViewById(R.id.playPause);
         levelTitle = findViewById(R.id.levelTitle);
         moveCount = findViewById(R.id.moveCount);
+        gridLayoutMaster = findViewById(R.id.boardFrame);
+        main = findViewById(R.id.main);
 
 
         nextButton.setOnClickListener(v -> changeLevelOnClick(1));
@@ -84,22 +86,13 @@ public class MainActivity extends AppCompatActivity {
         playPauseButton.setOnClickListener(v -> togglePlayPause());
 
         restartButton.setOnClickListener(v -> {
-            Log.d(TAG, "Restarting game");
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setCancelable(true);
-            builder.setTitle("Confirm");
-            builder.setMessage("Are you sure you want to restart the level?");
-            builder.setPositiveButton("Confirm", (dialog, which) -> init());
-            builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> {
-            });
-
-            AlertDialog dialog = builder.create();
-            dialog.show();
+            resetLeve();
 
         });
 
         undoButton.setOnClickListener(v -> {
             gameController.undoMove();
+            goalCount.setText(gameController.getGoalCountText());
             moveCount.setText(gameController.getMoveCountText());
         });
 
@@ -115,14 +108,39 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void init() {
-        if (gridLayout != null) {
-            gridLayout.setVisibility(View.GONE);
-            gridLayout = null;
-            levelInfoLayout.removeView(levelTimer);
-            moveCount.setVisibility(View.INVISIBLE);
-        }
+    private void resetLeve() {
+        levelTimer.stop();
+        levelInfoLayout.setVisibility(View.GONE);
+        gameController.getCurrentLevelGrid().setVisibility(View.GONE);
 
+
+        Log.d(TAG, "Restarting game");
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(true);
+        builder.setTitle("Confirm");
+        builder.setMessage("Are you sure you want to restart the level?");
+        builder.setPositiveButton("Confirm", (dialog, which) -> {
+            gameController.resetCurrentLevel();
+            togglePlayPause(false);
+        });
+        builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+            resumeFromDialog();
+        });
+        builder.setOnCancelListener(dialog -> {
+            resumeFromDialog();
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void resumeFromDialog() {
+        levelTimer.start();
+        levelInfoLayout.setVisibility(View.VISIBLE);
+        gameController.getCurrentLevelGrid().setVisibility(View.VISIBLE);
+    }
+
+    private void init() {
         gameController.init();
 
         goalCount.setVisibility(View.INVISIBLE);
@@ -138,7 +156,6 @@ public class MainActivity extends AppCompatActivity {
         startButton.setText(gameController.getStartButtonText());
         startButton.setVisibility(View.VISIBLE);
         startButton.setOnClickListener(v -> this.togglePlayPause());
-
 
     }
 
@@ -186,21 +203,17 @@ public class MainActivity extends AppCompatActivity {
         if (gameController.isPlaying() && !gameController.isLevelCompleted()) {
             levelTimer.stop();
             levelInfoLayout.setVisibility(View.GONE);
-            gridLayout.setVisibility(View.GONE);
+            gameController.getCurrentLevelGrid().setVisibility(View.GONE);
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setCancelable(true);
             builder.setTitle("Confirm");
             builder.setMessage("Are you sure you want to change levels? The game will be paused and the level saved.");
             builder.setPositiveButton("Confirm", (dialog, which) -> changeLevel(change));
             builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> {
-                levelTimer.start();
-                gridLayout.setVisibility(View.VISIBLE);
-                levelInfoLayout.setVisibility(View.VISIBLE);
+                resumeFromDialog();
             });
             builder.setOnCancelListener(dialog -> {
-                levelTimer.start();
-                gridLayout.setVisibility(View.VISIBLE);
-                levelInfoLayout.setVisibility(View.VISIBLE);
+                resumeFromDialog();
             });
             builder.create().show();
 
@@ -224,11 +237,8 @@ public class MainActivity extends AppCompatActivity {
 
         levelTitle.setText(R.string.app_name);
 
-
-        if (gridLayout != null) {
-            gridLayout = null;
-            levelInfoLayout.removeView(levelTimer);
-            moveCount.setVisibility(View.INVISIBLE);
+        if (gameController.getCurrentLevelGrid() != null) {
+            main.removeView(gameController.getCurrentLevelGrid());
 //            levelInfoLayout.removeAllViews();
         }
         startButton.setText(gameController.getStartButtonText());
@@ -243,6 +253,8 @@ public class MainActivity extends AppCompatActivity {
         if (pause) {
             if (levelTimer != null) {
                 levelTimer.stop();
+            }
+            if (levelInfoLayout != null) {
                 levelInfoLayout.setVisibility(View.INVISIBLE);
             }
             gameController.setPlaying(false);
@@ -250,22 +262,19 @@ public class MainActivity extends AppCompatActivity {
             undoButton.setEnabled(false);
             restartButton.setEnabled(false);
             playPauseButton.setImageResource(R.drawable.play);
-            if (gridLayout != null) {
-                gridLayout.setVisibility(View.GONE);
-                startButton.setText(gameController.getStartButtonText());
+            if (gameController.getCurrentLevelGrid() != null) {
+                gameController.getCurrentLevelGrid().setVisibility(View.GONE);
             }
+            startButton.setText(gameController.getStartButtonText());
         } else {
             gameController.setPlaying(true);
             startButton.setVisibility(View.GONE);
+            if (gameController.getMoveCount() != 0) {
+                undoButton.setEnabled(true);
+            }
             playPauseButton.setImageResource(R.drawable.pause);
             restartButton.setEnabled(true);
-            if (gridLayout == null) {
-                renderCurrentLevel();
-            } else {
-                gridLayout.setVisibility(View.VISIBLE);
-                levelTimer.start();
-                levelInfoLayout.setVisibility(View.VISIBLE);
-            }
+            renderCurrentLevel();
         }
     }
 
@@ -274,7 +283,52 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void renderCurrentLevel() {
-        gridLayout = findViewById(R.id.boardFrame);
+        GridLayout gridLayout;
+        if (gameController.getCurrentLevelGrid() != null) {
+            gridLayout = gameController.getCurrentLevelGrid();
+            gridLayout.setVisibility(View.VISIBLE);
+        } else {
+            gridLayout = getGameBoardView();
+            gameController.addCurrentLevelGrid(gridLayout);
+        }
+
+        if (main.indexOfChild(gridLayout) == -1) {
+            main.addView(gridLayout);
+        }
+
+        if (levelTimer != null) {
+            levelInfoLayout.removeView(levelTimer);
+        }
+
+        levelTitle.setText(gameController.getLevelTitle());
+
+        goalCount.setVisibility(View.VISIBLE);
+        goalCount.setText(gameController.getGoalCountText());
+
+        gameController.render();
+
+        moveCount.setText(gameController.getMoveCountText());
+        moveCount.setVisibility(View.VISIBLE);
+
+        levelTimer = gameController.getCurrentLevelTimer();
+
+        levelInfoLayout = findViewById(R.id.levelInfo);
+        if (levelInfoLayout.indexOfChild(levelTimer) == -1) {
+            levelInfoLayout.addView(levelTimer);
+        }
+//        levelInfoLayout.addView(moveCount);
+
+        if (!gameController.isLevelCompleted()) {
+            levelTimer.start();
+        }
+        levelInfoLayout.setVisibility(View.VISIBLE);
+    }
+
+    @NonNull
+    private GridLayout getGameBoardView() {
+        GridLayout gridLayout = new GridLayout(this);
+        gridLayout.setLayoutParams(gridLayoutMaster.getLayoutParams());
+
         gridLayout.setVisibility(View.VISIBLE);
 
 //        clear the grid layout
@@ -337,33 +391,12 @@ public class MainActivity extends AppCompatActivity {
                 gridLayout.addView(image);
             }
         }
-
-        levelTitle.setText(gameController.getLevelTitle());
-
-        goalCount.setVisibility(View.VISIBLE);
-        goalCount.setText(gameController.getGoalCountText());
-
-        gameController.render();
-
-
-        moveCount.setText(gameController.getMoveCountText());
-        moveCount.setVisibility(View.VISIBLE);
-
-        levelTimer = gameController.getCurrentLevelTimer();
-
-        levelInfoLayout = findViewById(R.id.levelInfo);
-        levelInfoLayout.addView(levelTimer);
-//        levelInfoLayout.addView(moveCount);
-
-        if (!gameController.isLevelCompleted()) {
-            levelTimer.start();
-        }
-        levelInfoLayout.setVisibility(View.VISIBLE);
+        return gridLayout;
     }
 
     public PlayableSquareView getSquareView(int row, int column) {
-        if (gridLayout != null) {
-            View view = gridLayout.getChildAt(row * gameController.getGame().getLevelWidth() + column);
+        if (gameController.getCurrentLevelGrid() != null) {
+            View view = gameController.getCurrentLevelGrid().getChildAt(row * gameController.getGame().getLevelWidth() + column);
             if (view instanceof PlayableSquareView) {
                 return (PlayableSquareView) view;
             }

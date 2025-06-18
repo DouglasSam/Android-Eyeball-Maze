@@ -10,15 +10,13 @@
 
     <GridLayout
         android:id="@+id/boardFrame"
-        android:layout_width="match_parent"
-        android:visibility="gone"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@id/controlFrame"
+        android:layout_marginHorizontal="56dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/titleFrame">
+        app:layout_constraintStart_toEndOf="@id/titleFrame"
+        app:layout_constraintTop_toTopOf="parent">
 
 
     </GridLayout>
@@ -26,10 +24,13 @@
     <LinearLayout
         android:id="@+id/titleFrame"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginHorizontal="4dp"
+        android:layout_marginVertical="16dp"
         android:orientation="vertical"
 
-        app:layout_constraintEnd_toEndOf="parent"
+
+        app:layout_constraintBottom_toTopOf="@id/controlFrame"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -37,32 +38,29 @@
             android:id="@+id/levelTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:text="@string/app_name"
             android:textSize="24sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            />
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/goalCount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:gravity="center"
             android:text="@string/goal_count"
-            android:visibility="invisible"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:gravity="center"
-            android:layout_margin="5dp"
-            />
-
+            android:visibility="invisible" />
 
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/levelInfo"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:layout_height="match_parent"
             android:layout_marginHorizontal="5dp"
+            android:orientation="horizontal"
 
             >
 
@@ -73,82 +71,78 @@
                 android:text="@string/move_count"
                 android:visibility="invisible"
                 app:layout_constraintEnd_toEndOf="@id/levelInfo"
-                app:layout_constraintTop_toTopOf="parent"/>
+                app:layout_constraintTop_toTopOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </LinearLayout>
 
 
-
-
     <Button
+        android:id="@+id/startLevel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/startLevel"
         android:text="@string/start_resume_level"
         android:textSize="24sp"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
         android:id="@+id/controlFrame"
         android:layout_width="0dp"
         android:layout_height="48dp"
         android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:paddingEnd="5dp"
         android:paddingStart="5dp"
-        >
+        android:paddingEnd="5dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/titleFrame"
+        app:layout_constraintStart_toStartOf="parent">
 
         <ImageButton
             android:id="@+id/backLevel"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:adjustViewBounds="true"
             android:backgroundTint="@color/button_background_tint"
             android:contentDescription="@string/back_level"
-            android:src="@drawable/back"
             android:scaleType="fitCenter"
-            android:adjustViewBounds="true"/>
+            android:src="@drawable/back" />
 
         <ImageButton
             android:id="@+id/undoMove"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:adjustViewBounds="true"
             android:backgroundTint="@color/button_background_tint"
             android:contentDescription="@string/undo_move"
-            android:src="@drawable/undo"
             android:scaleType="fitCenter"
-            android:adjustViewBounds="true"/>
+            android:src="@drawable/undo" />
 
         <ImageButton
             android:id="@+id/playPause"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:adjustViewBounds="true"
             android:backgroundTint="@color/button_background_tint"
             android:contentDescription="@string/pause_symbol"
-            android:src="@drawable/play"
             android:scaleType="fitCenter"
-            android:adjustViewBounds="true"/>
+            android:src="@drawable/play" />
 
         <ImageButton
             android:id="@+id/restart"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:adjustViewBounds="true"
             android:backgroundTint="@color/button_background_tint"
             android:contentDescription="@string/reset_symbol"
-            android:src="@drawable/restart"
             android:scaleType="fitCenter"
-            android:adjustViewBounds="true"/>
+            android:src="@drawable/restart" />
 
         <ImageButton
             android:id="@+id/nextLevel"
@@ -156,21 +150,10 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:adjustViewBounds="true"
+            android:backgroundTint="@color/button_background_tint"
             android:contentDescription="@string/next_symbol"
             android:scaleType="fitCenter"
             android:src="@drawable/next" />
     </LinearLayout>
-
-    <nz.ac.ara.sjd0364.MuteButton
-        android:id="@+id/muteButton"
-        android:layout_width="36dp"
-        android:layout_margin="12dp"
-        android:layout_height="36dp"
-        android:scaleType="fitXY"
-        android:contentDescription="@string/toggle_mute"
-        android:background="@null"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,12 +1,8 @@
 package nz.ac.ara.sjd0364;
 
-import static nz.ac.ara.sjd0364.Lookup.getDirection;
-import static nz.ac.ara.sjd0364.Lookup.getShape;
-import static nz.ac.ara.sjd0364.model.enums.Color.BLANK;
-
 import android.util.Log;
+import android.widget.GridLayout;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -17,18 +13,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import nz.ac.ara.sjd0364.model.BlankSquare;
 import nz.ac.ara.sjd0364.model.Game;
-import nz.ac.ara.sjd0364.model.PlayableSquare;
-import nz.ac.ara.sjd0364.model.enums.Direction;
 import nz.ac.ara.sjd0364.model.enums.Message;
-import nz.ac.ara.sjd0364.model.enums.Shape;
-import nz.ac.ara.sjd0364.model.interfaces.Square;
 
 public class GameController {
 
     private static final String TAG = "GameController";
-    private Game game;
+    private final Game game;
     private final MainActivity context;
     private int currentLevel = 0;
     private boolean isPlaying = false;
@@ -38,7 +29,8 @@ public class GameController {
 
     private final Map<Integer, Boolean> levelCompletedMap;
 
-    private final Map<Integer, Integer> levelMoveCountMap;
+    private final Map<Integer, GridLayout> levelGridMap;
+    private final MazeReader mazeReader;
 
     public GameController(MainActivity context) {
         this.context = context;
@@ -47,7 +39,9 @@ public class GameController {
         levelTimeMap = new HashMap<>();
         levelMoves = new HashMap<>();
         levelCompletedMap = new HashMap<>();
-        levelMoveCountMap = new HashMap<>();
+        levelGridMap = new HashMap<>();
+
+        mazeReader = new MazeReader(context, game);
 
         loadMessageStringsFromFiles();
     }
@@ -85,8 +79,6 @@ public class GameController {
 
             lastMove.squareView().toggleEyeballRendering();
 
-            levelMoveCountMap.computeIfPresent(currentLevel, (level, count) -> count + 1);
-
         } else {
             Log.d(TAG, "No moves to undo");
         }
@@ -95,21 +87,39 @@ public class GameController {
     public void init() {
         isPlaying = false;
 
-        game = new Game();
+//        game = new Game();
 
-        loadMazesFromFiles();
+        mazeReader.loadAllMazesFromFiles();
 
         levelTimeMap.remove(currentLevel);
         levelMoves.remove(currentLevel);
-        levelMoveCountMap.remove(currentLevel);
         levelCompletedMap.remove(currentLevel);
+        levelGridMap.remove(currentLevel);
 
         game.setLevel(currentLevel);
     }
 
+    public void addCurrentLevelGrid(GridLayout gridLayout) {
+        levelGridMap.put(currentLevel, gridLayout);
+    }
+
+    public void resetCurrentLevel() {
+        levelMoves.computeIfPresent(currentLevel, (level, moves) -> {
+            moves.clear();
+            return moves;
+        });
+        levelCompletedMap.put(currentLevel, false);
+        levelTimeMap.put(currentLevel, new Timer(context));
+        mazeReader.loadSpecificMazeFromFile(currentLevel);
+        levelGridMap.remove(currentLevel);
+    }
+
+    public GridLayout getCurrentLevelGrid() {
+        return levelGridMap.get(currentLevel);
+    }
+
     public void render() {
         levelMoves.computeIfAbsent(currentLevel, k -> new java.util.ArrayList<>());
-        levelMoveCountMap.putIfAbsent(currentLevel, 0);
 
 
         Timer levelTimer;
@@ -133,7 +143,6 @@ public class GameController {
             levelMoves.put(currentLevel, new java.util.ArrayList<>());
         }
         levelMoves.get(currentLevel).add(move);
-        levelMoveCountMap.computeIfPresent(currentLevel, (level, count) -> count + 1);
     }
 
     public void completeLevel() {
@@ -161,13 +170,17 @@ public class GameController {
         if (game.getGoalCount() == 0) {
             r = context.getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getCompletedGoalCount());
         } else {
-            r = context.getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getGoalCount());
+            r = context.getResources().getString(R.string.goal_count, game.getCompletedGoalCount(), game.getGoalCount() + game.getCompletedGoalCount());
         }
         return r;
     }
 
     public String getMoveCountText() {
-        return context.getResources().getString(R.string.move_count, levelMoveCountMap.getOrDefault(currentLevel, 0));
+        return context.getResources().getString(R.string.move_count, getMoveCount());
+    }
+
+    public int getMoveCount() {
+        return levelMoves.getOrDefault(currentLevel, new ArrayList<>()).size();
     }
 
     public boolean isFirstLevel() {
@@ -200,7 +213,7 @@ public class GameController {
     }
 
     public void setPlaying(boolean playing) {
-        levelMoves.compute(currentLevel, (level, moves) -> new ArrayList<>());
+//        levelMoves.compute(currentLevel, (level, moves) -> new ArrayList<>());
         isPlaying = playing;
     }
 
@@ -225,7 +238,7 @@ public class GameController {
 
     private void loadMessageStringsFromFiles() {
         try {
-            String messageJsonString = context.getAssetAsString("messages.json");
+            String messageJsonString = Lookup.getAssetAsString(context, "messages.json");
             JSONObject messageJson = new JSONObject(messageJsonString);
             Arrays.stream(Message.values()).forEach(message -> {
                 try {
@@ -246,52 +259,5 @@ public class GameController {
         }
     }
 
-    protected void loadMazesFromFiles() {
-        // Load mazes from resources or any other source
-        // This is just a placeholder for the actual implementation
-        Log.d(TAG, "Loading mazes from files");
 
-        try {
-            String[] mazes = context.getAssets().list("mazes");
-            if (mazes != null) {
-                for (String asset : mazes) {
-                    Log.d(TAG, "Loading maze: " + asset);
-                    JSONObject mazeJson = new JSONObject(context.getAssetAsString("mazes/" + asset));
-                    JSONArray mazeSize = mazeJson.getJSONArray("size");
-                    int rows = mazeSize.getInt(0);
-                    int cols = mazeSize.getInt(1);
-                    game.addLevel(rows, cols);
-                    JSONArray board = mazeJson.getJSONArray("board");
-                    for (int i = 0; i < rows; i++) {
-                        JSONArray row = board.getJSONArray(i);
-                        for (int j = 0; j < cols; j++) {
-                            String cellDate = row.getString(j);
-                            Shape shape = getShape(cellDate.substring(0, 1));
-                            nz.ac.ara.sjd0364.model.enums.Color color = Lookup.getColorFromChar(cellDate.charAt(1));
-                            Square square = new PlayableSquare(color, shape);
-                            if (shape == Shape.BLANK && color == BLANK) {
-                                square = new BlankSquare();
-                            }
-                            game.addSquare(square, i, j);
-                        }
-                    }
-                    JSONArray startPos = mazeJson.getJSONArray("startPlayer");
-                    Direction direction = getDirection(mazeJson.getString("startOrientation"));
-                    game.addEyeball(startPos.getInt(0), startPos.getInt(1), direction);
-
-                    JSONArray goals = mazeJson.getJSONArray("goals");
-                    for (int i = 0; i < goals.length()-1; i+=2) {
-                        int goalRow = goals.getInt(i);
-                        int goalCol = goals.getInt(i+1);
-                        game.addGoal(goalRow, goalCol);
-                    }
-                }
-            } else {
-                Log.w(TAG, "No mazes found in assets");
-            }
-
-        } catch (Exception e) {
-            Log.e(TAG, "Error loading mazes", e);
-        }
-    }
 }

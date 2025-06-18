@@ -1,7 +1,7 @@
 package nz.ac.ara.sjd0364.model;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import nz.ac.ara.sjd0364.model.enums.Direction;
 import nz.ac.ara.sjd0364.model.enums.Message;
@@ -15,13 +15,13 @@ public class Level {
 
     private final Square[][] board;
     private Eyeball eyeball;
-    private final List<Goal> goals;
+    private final Set<Goal> goals;
     private int totalGoals;
     private boolean removeGoal;
 
     protected Level(int height, int width) {
         board = new Square[height][width];
-        this.goals = new ArrayList<>();
+        this.goals = new HashSet<>();
     }
 
     protected int getWidth() {
@@ -64,7 +64,7 @@ public class Level {
     protected void addGoal(int row, int column) {
         testCoordinatesBoundaries(row, column);
         goals.add(new Goal(row, column));
-        totalGoals++;
+        totalGoals = goals.size();
     }
 
     /**
