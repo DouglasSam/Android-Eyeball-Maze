@@ -19,7 +19,8 @@
 
 ## SHOULD features:
 ### 5 out of 10 features
-#### At 2 marks each - 10 Marks
+
+#### At 2 marks each - 16 Marks
 
 - [x] Display the number of goals for accomplishment out of the total number of goals
 - [x] Only update the changed parts of the level when playing the game
@@ -36,7 +37,7 @@
 
 ### 3 out of 7 features
 
-#### At 2 marks each - 6 Marks, out of max of 10
+#### At 2 marks each - 8 Marks, out of max of 10
 - [x] Calculate and display the elapsed time
 - [x] Pause a game
   - [x] Pause a game to stop the timer, and un-pause the game to continue the timer
@@ -46,13 +47,5 @@
   * _The playback feature allows you to record gameplay as you play and play it back later._
 - [ ] Allow the user to save a game status in a file or database during playing
 - [ ] Allow the user to select and load a status of a previous unfinished game from a file or database to continue playing
-- [ ] Automatically scale the graphical user interface of the application on devices with different screen sizes (Responsive Design)
-
-
-## attribution
-
-- https://www.zapsplat.com/music/retro-8-bit-video-game-level-complete-music/
-- https://www.zapsplat.com/music/game-sound-retro-digital-fanfare-level-complete-or-achievement-tone-5/?registration_redirect=1&item_id=67619
-- https://www.zapsplat.com/music/game-sound-arcade-tone-incorrect-error-fail-etc/
-- https://www.zapsplat.com/music/retro-arcade-game-lose-fail/
--
+- [x] Automatically scale the graphical user interface of the application on devices with different
+  screen sizes (Responsive Design)

@@ -409,21 +409,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
-    protected String getAssetAsString(String assetFilePath) throws IOException {
-//        TODO replace with GSON
-        InputStream fileStream = getAssets().open(assetFilePath);
-        BufferedReader fileReader = new BufferedReader(new InputStreamReader(fileStream));
-        StringBuilder stringBuilder = new StringBuilder();
-        String line;
-        while ((line = fileReader.readLine()) != null) {
-            stringBuilder.append(line);
-        }
-        fileReader.close();
-        fileStream.close();
-        return stringBuilder.toString();
-    }
-
     public void playDingSound() {
         playSound(R.raw.ding);
 
